@@ -1,3 +1,16 @@
-# This is to hold all the project related stuff for Docker, Docker Swarm and Kubernetes
+# DOCKER, SWARM & KUBERNETES
 
-## Please proceed to upload all the projects here for above mentioned technologies.
+## Getting requirements
+## Docker install
+## Container basics
+## Image basics
+## Docker networking
+## Docker volumes
+## Docker compose
+## Orchestration
+## Docker Swarm
+## Kubernetes
+## Swarm vs. K8s
+## Students Q&As
+## File review
+## Reference Galore
