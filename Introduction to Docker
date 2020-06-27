@@ -1,0 +1,30 @@
+Advantages of Docker containers:
+    1) Containers are consistent across the board. They allows you to package the same way, regardless of your operating 
+        system, it allows you to distribute the software regardless of the setup.
+    2) Containers allows you to run and test software the same way, everyware you are running it, may be it mac, windows,
+        PC, cloud, Data center or anything. They all run the softare in a same way fundamentally when they are using 
+        Docker.
+    3) As we all know there are lots and lots of software that we have invented over the last decade and now we have
+        whole new task of maintaining those software. so 80% of any IT professional is going into maintaining that old
+        software instead of new innovation. and here comes the Docker which helps freeing up lots of this time and 
+        enabling us to invest time in innovation instead of maintaining old software.
+    4) To migrate your application to container or what we call it containerizing the application doesn't require any 
+        new coding and modification of an application because containerization ijust another way of running those 
+        applications, which makes it even more easy to migrate.
+    5) Docker containers help in huge infrastructure saving.
+    
+    Cloud Native Computing Foundation (CNCF)
+    ========================================
+    Its one of the fondational supported of lot of new technologies that are all container based.
+    https://landscape.cncf.io/fullscreen=yes&zoom=120
+
+    To join slack channel
+    ======================
+    email==> ss0315345@gmail.comes
+    Name ==> Sagar Sharma
+    password ==> Newton@123456789
+    slack link ==> https://dockermastery.slack.com/
+
+    Youtube channel
+    ===============
+    https://www.youtube.com/channel/UC0NErq0RhP51iXx64ZmyVfg
