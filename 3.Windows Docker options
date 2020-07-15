@@ -1,0 +1,38 @@
+In this section we will learn 
+1) Two different types of containers windows can run
+2) Learn which docker edition to install on your windows version
+3) Learn differences between windows 10 and windows server 2016
+
+==>So there are two different types of containers : Linux containers and windows containers
+==>Linux containers are still default, when we say just containers, it by default means linux containers and for windows
+    containers we will specifically mention windows containers.
+    Both types of containers are treated in a same way and they have small differences between the binary they run inside
+==>Docker for windows only comes for windows 10 Pro/Enterprise editions only.
+==>for windows 7/8/8.1 or windows 10 home, basics should use docker toolbox.
+==>Windows server 2016 also support Docker for windows.
+==>on windows its getting better and evolving new features rapidly. for example, Microsoft has announced that they will
+    come up with : "Native Linux containers"
+
+Docker on windows 10 Pro/Enterprise
+===================================
+1) Use docker for windows, from store.docker.com 
+2) More feature then just a Linux VM
+3) Uses hyper-V with tiny Linux VM for Linux containers, which inturn appears to be windows containers to us.
+4) Its power sell native.
+
+Docker on windows 7/8 and 10 home
+=================================
+1) It uses Docker toolbox, and not as fancy as that of Docker for windows.
+2) we can download it from store.docker.com
+3) Runs tiny Linux VM in VirtualBox via docker-machine.
+4) Uses bash shell to make it more like linux
+5) Does not support windows containers.
+
+Docker on windows server 2016
+=============================
+1) This support windows native containers. means it runs a windows binary out of the box without hyper-V or anything 
+    installed in a docker container
+2) It does also support docker for windows, but it is not required. So only do this when you run windows 2016 locally
+    for dev/test. Not for prod.
+
+    
