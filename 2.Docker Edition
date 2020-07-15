@@ -1,0 +1,39 @@
+Docker Edition
+==============
+1) We will lear about various (dozen+) docker editions
+2) We will learn which one to use for this course
+3) Learn Docker CE vs EE
+4) Learn Stable vs Edge Release.
+
+Docker editions at store.docker.com
+user ID ==> sagshar5
+password ==> Ishwarusmay199220
+
+Few Things to notice here
+=========================
+1) Docker is no longer just a "container runtime"
+2) Docker moves fast. it matters how you install it
+3) Docker CE(community edition) == This is a open source software available in a market.
+4) There are 3 major types installs of Docker 
+    a) Linux installation -- Here we just install it on a supported OS, meaning that it runs on that Kernal of OS.
+        So this is more of direct installation method
+    b) Windows 10 Installation/Mac Installation -- Here this is not a direct instalation of Docker on Kernel. its a a suit 
+        of tools, including GUI, and settings, preferences and all that to make it very easy to run linux containers which 
+        can be seen as windows 10 containers. because in order to run Docker on Windows 10 and Mac, there has to be a small
+        Linux Virtual machine has to be started in order to run containers on windows and Mac. So they are ultimately 
+        linux containers in the backgroud, but appears to be running on Windows 10 and Mac.
+    c) Docker for cloud -- (AWS/Azure/Google). These versions comes with docker installed on linux with them, and also
+        they come with features specific to that cloud vendor. So with AWS for example it comes with cloud formation 
+        template, it comes with persistent storage options for storing your databases, etc.
+
+CE vs EE & Stable vs Edge
+=========================
+
+CE (Free) -- comes after larger platform testing
+EE (Paid) -- Specific to perticular platform, and have 24*7 service supported
+
+Edge -- This is basically a beta version, and it comes out every month and only supported for a month untill the new
+    beta version comes out.
+Stable -- This rlls out for every 3 months of edge feature and extra 1 month in order to test new beta version and 
+    install its stable for next 3 month
+EE -- This has longer life span.
