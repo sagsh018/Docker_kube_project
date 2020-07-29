@@ -1,0 +1,110 @@
+1) We are considering installation of Docker on windows 7 
+2) We will install Docker
+3) Start docker quickstart terminal
+4) Tweak Docker VM settings
+5) Get the VSCode
+6) Tweak our terminal  and shell
+
+Steps
+======
+1) lets open hub.docker.com
+2) Then go to following link ==> https://hub.docker.com/editions/community/docker-ce-desktop-windows
+3) on this page on the right had side click on following link for docker toolbox ==> 
+    https://docs.docker.com/toolbox/overview/
+4) Then go to this page having steps to install docker toolbox for windows 7
+    https://docs.docker.com/toolbox/toolbox_install_windows/
+5) With Docker toolbox below are the list of thing which we are going to take
+    a) Docker CLI client for running docker Engine  to create images and containers.
+    b) Docker machine so you can run Docker engine commands from windows terminal
+    c) Docker compose for running the docker-compose commands
+    d) Kitematic, Docker GUI
+    e) Docker Quickstart shell preconfigured  for a docker command line environement.
+    f) Oracle VB 
+6) So we are going to start with checking the version of your windows 7 machine
+    a) windows 7 must be 64 bit 
+    b) virtualization must be enabled on windows 7
+7) Now lets download the latest version of docker toolbox from following link
+    https://github.com/docker/toolbox/releases
+    release ==> v19.03.1
+    After downloading the Docker toolbox and double click on that exe file in order to start the installation.
+8) Notice that in the setup we are going to select only Docker client, Docker machine, Docker compose and kitematic. as
+    we already have virtualbox and git installed. Go ahead and click next and follow the proceedure to install.
+9) once the installation completes you can verify the installation of below mentioned software on desktop   
+    a) Docker Quick start icon
+    b) Kitematic app icon
+    c) Oracle VM virtualbox
+    d) git bash
+10) Now click on docker quickstart icon on the desktop to launch pre-configured docker Toolbox terminal. once this
+    tollbox completes the configuration it will lead us to installed docker with below statement
+    "docker is configured to use the default mahcine with IP 192.168.99.100"
+11) Now we can also clone the already existing repo for Docker code from below URL
+    git clone https://github.com/BretFisher/udemy-docker-mastery.git, inside our project folder in order to get reference.
+    /c/Users/Sagar/projects/udemy-docker-mastery
+12) Now we can also see that in our Oracle VM Virtual box there is a small linux VM running which Docker has started in 
+    order to support docker containers, as then windows containers which we are going to see would be the linux
+    container in the backend.
+13) we could lauch the VM Virtualbox and check the status of machine and shut it down from there as usual, 
+    but the new thing which we can do here is using docker-machine command, which can actually list down the VM which
+    are running and also can start stop the VM inside Virtual box.
+    # docker-machine ls // To list down the VM running
+    # docker-machine start // to start the VM
+    # docker-mahcin stop // to stop the VM
+    So What docker-machine does is, it creates VM on cloud or on your local machine that run docker.
+    Also note that whatever first machine is created is created with name "default".
+14) When you will start the laptop then we have to atleast run docker quickstart atleast once, and then its going to 
+    automatically create this default machine, its going to automatically set it up and do the networking for you.
+15) once this is done, we don't have to use quickstart again. we can then simply use docker-machine from git bash inside
+    VScode in order to stop, start, and manage the Virtual box VM untill and unless you need to chenge the hardware 
+    settings for VM, because in that case we have to do it from Virtual box.
+16) Notice that once we have spun up the docker with the help of docker quick start,we can check the docker version with
+    the help of below command 
+    # docker version
+    This command is going to give the docker version for both the docker client and the docker server running in the 
+    backgroud.
+    But after this if suppose we start using VSCode as a bash shell editor, we might get error while showing version
+    for docker server version and only gives docker client version
+
+    This happens because sometimes our little docker client couldn;t able to talk to the actual docker server running 
+    on the VM running in the Virtual box.
+
+    This can be done by running the below command in VScode
+    
+    # docker-machine env default (default is a VM running)-- Which will give below output 
+        SET DOCKER_TLS_VERIFY=1
+        SET DOCKER_HOST=tcp://192.168.99.100:2376
+        SET DOCKER_CERT_PATH=C:\Users\Sagar\.docker\machine\machines\default
+        SET DOCKER_MACHINE_NAME=default
+        SET COMPOSE_CONVERT_WINDOWS_PATHS=true
+        REM Run this command to configure your shell:
+        REM     @FOR /f "tokens=*" %i IN ('"D:\Docker Toolbox\docker-machine.exe" env default') DO @%i
+
+    Now we can just run below command in the VScode 
+        @FOR /f "tokens=*" %i IN ('"D:\Docker Toolbox\docker-machine.exe" env default') DO @%i
+
+    And thats it, after that "docker version" will give below output
+        Client:
+        Version:           19.03.1
+        API version:       1.40
+        Go version:        go1.12.7
+        Git commit:        74b1e89e8a
+        Built:             Wed Jul 31 15:18:18 2019
+        OS/Arch:           windows/amd64
+        Experimental:      false
+
+        Server: Docker Engine - Community
+        Engine:
+        Version:          19.03.12
+        API version:      1.40 (minimum version 1.12)
+        Go version:       go1.13.10
+        Git commit:       48a66213fe
+        Built:            Mon Jun 22 15:49:35 2020
+        OS/Arch:          linux/amd64
+Tips
+====
+1) Use docker quickstart terminal to start with  and
+    a) in the background it auto-generates and auto-starts VM
+    b) Defualt to bash shell
+2) Code path enabled for bind mount work in C:\Users only
+3) Bind mount works for only code and not for database(i.e. file system)
+4) Re-create Linux VM or create more with docker-machine
+5) VSCode
