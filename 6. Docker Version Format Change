@@ -1,0 +1,22 @@
+TL;DR: Versions are now YY.MM  based (like Ubuntu) and you can choose *Stable* (slower) or *Edge* (faster) releases. This means that newer features drop faster in Edge releases, and fixes are backported for a longer timeline to Stable releases. Everyone wins.
+
+There may be mentions of 1.12  and 1.13  in this course, which were the two versions before 17.03 . 1.13.1  is actually the same features as 17.03.0 , so if you see 1.13  on my screen recording and 17.04  or similar in your CLI, it's fine!
+
+In 2017 the Docker versioning, release cycle, and product names changed, but features haven't. Full details are here, but my commentary on important highlights are below:
+
+Docker Engine (the free one we all know and love) is now Docker CE (Community Edition). Notice the drop of the word Engine. I suspect we can just call this Docker now. It includes the cli client and backend daemon/service and api (just like it did before). You can get it the same ways as before.
+
+Docker Data Center is now Docker EE (Enterprise Edition) and adds additional paid products and support on top of Docker in three pricing tiers.
+
+These changes don't affect Docker Compose or Docker Machine.
+
+Docker's version is now YY.MM  based, using the month of its expected release, and the first one will be 17.03.0 , which is "the first point release" of the 17.03  release. If any bug/security fixes are needed to that release, the first update will be 17.03.1  etc.
+
+We now have two release tracks (called variants) "Edge" and "Stable". 
+
+Edge is released monthly and supported for a month.
+
+Stable is released quarterly and support for 4 months.
+
+You can extend Stable's support and backported fixes through a Docker EE subscription.
+

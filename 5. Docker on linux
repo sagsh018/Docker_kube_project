@@ -1,0 +1,99 @@
+1) So here we have our Virtual machine running on VMware and we are going to run linux native containers directly on 
+    linux.
+2) Docker on linux is an easiest install/setup, and it is a best native experience. So in this case there is no
+    emulation or any VM running on a Virtual box.
+3) There are three main ways of installing docker on linux : script, store or docker-machine
+    a) Script
+        get.docker.com script(This gives the latest release)
+        # curl -sSL https://get.docker.com/ | sh
+    b) hub.docker.com has instructions for each distribution(like : ubuntu, RHEL, Debian, Fedore)
+        RHEL officially only support Docker EE (paid), but Centos will work
+        We can install docker on VM, clud instance, all are same
+        Yes, it may not work for unlisted distribution like : Amazon Linux, Linode Linux, etc
+        Do not use pre installed setup for docker like (Digital ocean, Linode, etc)
+
+Docker for Linux : setup
+========================
+1) Update our package manager and install docker
+2) Add our user account to the docker group so that you can run docker commands without using sudo
+3) Clone a Github repo having all codes from udemy
+4) get the code editor. again we already have VScode
+5) Tweak your terminal and shell (optional)
+
+6) So now we are going to try out the way to install the docker using script which we have explained above.
+7) Go the below link
+    https://docs.docker.com/engine/install/centos/#install-using-the-convenience-script
+    This page has detailed step to install docker for all three methods
+    a) setup docker repo and install from them.
+    b) Download the RPM package and install it manually and manage upgrades completely manually
+    c) Using automated convenience scripts to install docker
+8) Lets start with installing docker using script
+    =============================================
+    a) Suppose we want to install a edge release of docker in order to perform some testing or some temp tasks.
+    b) We can go the following link https://get.docker.com/, Which has the script for installing a docker 
+    c) Noe there are few thins to note about this script installation for either edge version of the test version.
+        i) The scripts require root or sudo privileges to run. there for these scripts should be ran carefully.
+        ii) The scripts attempt to detect your linux distribution and version and configure your package management 
+            system for you. but, the scripts do not allow you to customize any of the installation parameter 
+        iii) The scripts install all dependencies and recommendations of the package manager without asking for c
+                confirmation.
+        iv) The scripts do allow to specify which version of docker you need, it install the latest edge release.
+    d) So in order to install docker edge release and docker test release using https://get.docker.com/ and 
+        https://test.docker.com/ 
+    e) if we go to the following page of edge docker script : https://get.docker.com/.
+        you will find there the installation steps in the introduction to the script 
+        #!/bin/sh
+        set -e
+        # Docker CE for Linux installation script
+        #
+        # See https://docs.docker.com/install/ for the installation steps.
+        #
+        # This script is meant for quick & easy install via:
+        #   $ curl -fsSL https://get.docker.com -o get-docker.sh
+        #   $ sh get-docker.sh
+        So we are going to use below commands
+
+        # curl -fsSL https://get.docker.com -o get-docker.sh
+        # sudo sh get-docker.sh
+        Note that this method is going to insall docker-ce package in the background
+        once the installation completes , we can do the final step to add current user ID to the docker group, so that
+        user can use the docker commands without using sudo.
+        # sudo usermod -aG docker redhat
+        So this command is introduce in order to add your user to docker group so that your user can run docker command
+        without using sudo, but some linux enterprises like centos and rhel made it mendatory to use sudo in the docker
+        commands, even if the user id added to the docker group.
+
+        So after installation of docker using script as above you can check the below commands
+        # sudo docker version
+9) Now lets also understand the method of installing docker on linux using repository
+    a) So we are as some non root user on our VM inside that non root user home directory. So we will start by installing
+        yum-utils package ( Which is going to provide yum-config-manager utility) and set up the stable repo
+        # sudo yum install yum-utils -y        
+        # sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    b)  Repository 'rhel-7-server-extras-rpms' is enabled for this system
+        # sudo subscription-manager repos --enable=rhel-7-server-extras-rpms ( This is to avoid errors related to 
+            container-selinux)
+    c)  To install latest version of docker Engine and containered
+            # sudo yum install docker-ce docker-ce-cli containerd.io
+    d) To start the docker service
+        # sudo systemctl start docker ; sudo systemctl enable docker
+    e) Now again you can add sharmasag user id into docjer group as a secondary group, but it is not going to be of any use
+        as according to new standards we will have to be sudo user to run docker commands as docker is going to perform 
+        operations at kernel level.
+        # sudo usermod -aG docker sharmasag
+10) Now after installation of this docker, we have 2 more things that need to be installed in case of linux separately
+    those are "docker machine" and "docker compose"
+11) Open up the following URL and follow the steps as :
+    a) Download the docker-machine binary and extract it the PATH
+        curl -L https://github.com/docker/machine/releases/download/v0.16.0/docker-machine-$(uname -s)-$(uname -m) >/tmp/docker-machine &&
+        chmod +x /tmp/docker-machine &&
+        sudo cp -p /tmp/docker-machine /usr/local/bin/docker-machine
+        Then we can check the version of docker-machine
+        docker-machine --version
+12) Now after installation of docker-machine binary, we are now going to install docker-docker compose.
+    a) reach out to following URL ==> https://docs.docker.com/compose/install/
+        # sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    b) sudo chmod +x /usr/local/bin/docker-compose
+    c) docker-compose --version
+13) Last thing is we can clone the repo of Docker based on udemy course form the below URL and below command
+    git clone https://github.com/sagsh018/udemy-docker-mastery.git
