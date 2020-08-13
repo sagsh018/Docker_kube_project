@@ -1,0 +1,57 @@
+1) So here we are firtly going to see what all we are going to cover in this section. i.e. containers
+2) So containers are fundamental building blocks of docker tool kit.
+3) Below are the things we are going to cover here
+    a) Check versions of our docker Cli and engine.
+    b) Create nginx web server container.
+    c) Learn common container management commands
+    d) Learn Docker networking basics
+    e) For all the above steps we need to make sure we have latest version of docker installed on our system.
+4) So first thing that we are interested to check here is that we have to check version of our docker client and docker 
+    engine/server.
+    # docker version
+    So this command is going to give us the version of our docker cli where we are going to type our commands. This is 
+    same in case of all windows, linux and mac and the next thing it gives is the version of docker engine
+    in case of windows we have docker engine running as a service/VM in virtualbox and in case of linux and Mac its just 
+    daemon running in the backgroud.
+    Client:
+        Version:           19.03.1
+        API version:       1.40
+        Go version:        go1.12.7
+        Git commit:        74b1e89e8a
+        Built:             Wed Jul 31 15:18:18 2019
+        OS/Arch:           windows/amd64
+        Experimental:      false
+
+    Server: Docker Engine - Community
+        Engine:
+        Version:          19.03.12
+        API version:      1.40 (minimum version 1.12)
+        Go version:       go1.13.10
+        Git commit:       48a66213fe
+        Built:            Mon Jun 22 15:49:35 2020
+        OS/Arch:          linux/amd64
+    So here my CLi is talking to the server running in the backgroud in virtual box and returning me the version of 
+    both CLI itself and the server as well/
+    So this basically indicates that our cli can talk to docker engine and we are good to go
+5) Now lets consider another command to get more information about the docker.
+    # docker info
+    This shows most of the configuration values for the engine.
+    Some of the information provided by this command is basic information abor number of containers running, number
+    of images running. Other information we are going to study later in this course.
+6) We can ge the list of commands that we can run with docker by using below command
+    # docker
+    Now this list gives both the old way of running the commands as well gives new way of running the commands
+    Like:
+    docker run // This was the old way of running the docker
+    docker container run // This is a new way of running the same command.
+    Notice both the new and old commands still works fine with docker.
+
+Summary
+=======
+1) command : docker version
+    This verify our cli can talk to docker engine.
+2) command : docker info    
+    This gives most of the configuration information about docker engine,
+3) Docker command line structure
+    old : docker command (optons)
+    new : docker command sub-command
