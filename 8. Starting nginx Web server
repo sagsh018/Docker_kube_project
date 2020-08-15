@@ -1,0 +1,141 @@
+1) We are going to concentrate on below in this lecture 
+    a) image vs container
+    b) run/stop/remove container
+    c) check container logs and messages.
+
+Image vs. container
+===================
+--> An image  is  binaries, libraries and source code, that makes up the application which we want to run
+--> Wherease container is an running instance of that image running as a process.
+--> You can have many containers all running off the same image 
+--> In this lecture we are going to make use of open source image named as nginx web server.
+--> So we will be starting our containers based off that nginx image and we will get that image from "registry" and
+    default registery for docker is called as Docker hub(hub.docker.com)
+
+2) So now lets start our first container using below command
+    # docker container run --publish 80:80 nginx
+    Notice that this is a new style of writing the command and old way is "docker run..."
+    Now this command is going to bring up our container running nginx web server image. and we can switch over to our
+    browser and try to hit nginx web server running on our windows system, but actually this is running on our 
+    docker server VM in virtual box. hence we can hiy nginx with the help og that IP address
+    "192.168.99.100"
+    Lets also create entry for this IP in our hosts file in order to have DNS. So that we can directly use name and 
+    get that resolved on our local system.
+    Host file entry ==> "192.168.99.100  docker.engine"
+
+    Now notice that if we click on refresh for the above nginx page we got in browser, we are getting our logs here 
+    on the command line itself. as below
+
+    =================================================================================================================================================================================================
+    192.168.99.1 - - [15/Aug/2020:03:29:59 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36" "-"
+    192.168.99.1 - - [15/Aug/2020:03:30:00 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36" "-"
+    192.168.99.1 - - [15/Aug/2020:03:30:00 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36" "-"
+    192.168.99.1 - - [15/Aug/2020:03:30:01 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36" "-"
+    =================================================================================================================================================================================================
+
+3) Now lets consider what just actually happened in the backgroud when we started our nginx container with the help 
+    below command
+    docker container run --publish 80:80 nginx.
+    a) Since the nginx image is not available locally hence it will downloaded from docker registry known as docker
+        hub
+    b) After image will be downloaded the new container will be started from that image
+    c) the "--publish" part of a command is going to expose port 80 of our local machine (which is port 80 of our docker
+        engine in case of docker toolbox, port 80 on linux machine in case of linux and port 80 of our local windows 
+        machine in case of docker for windows)
+    d) The whatever traffic comes on port 80 of our local system is routes to the container IP, on port 80 as we have 
+        mapped 80 of local to port 80 in container.
+        Note that if the port 80 on local system is already listening and occupied by something else, then in that case
+        we can map the ports like below as well
+        8080:80 (or)
+        8888:80
+4) But notice that we have our container running as a foregroud process and we dont have our prompt available and we 
+    don't wan't that. So lets hit "Ctrl+c", to get back to prompt.
+    Now one important thing to notice here is that ctrl+c will not stop the running container process in windows 
+    it will leave container running in the backgroud, but in case of linux the ctrl+c will stop the process and container
+    as well.
+5) In order to run the conatiner in backgroud we can make use of another option in above docker container run command
+    # docker container run --publish 80:80 --detach nginx
+    o/p:
+        $ docker container run --publish 8080:80 --detach nginx
+            5af6d79a02a62b4c9380797d9bfc21aed3491489479a332a68101a920e22b5d2
+    So from the above output we don't see our container running in the foreground and it is now running in background.
+    We can also notice that we got back the unique container ID. and everytime you will run new container, you will get
+    new container ID
+    Now we can list all the container running using below command
+    # docker container ls 
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+    5af6d79a02a6        nginx               "/docker-entrypoint."   3 minutes ago       Up 3 minutes        0.0.0.0:8080->80/tcp   serene_meninsky
+    2bb013e087c7        nginx               "/docker-entrypoint."   3 hours ago         Up 3 hours          0.0.0.0:80->80/tcp     laughing_khayyam
+    So we have two containers, the first one is the one we ran in backgroud and we can see it has same container ID as
+    returned by the docker command when we ran the container in background usinf --detach.
+    the second one is the one we ran in foreground.
+6) Now lets go ahead and stop our container using below command
+    # docker container stop <container ID/ container name>
+    You need not to give complete container ID, we can give upto the digits that can differentiate the container.
+    Also notice that name of the containers are also has to be unique.
+    So lets try to stop one out of the below
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+    5af6d79a02a6        nginx               "/docker-entrypoint."   3 minutes ago       Up 3 minutes        0.0.0.0:8080->80/tcp   serene_meninsky
+    2bb013e087c7        nginx               "/docker-entrypoint."   3 hours ago         Up 3 hours          0.0.0.0:80->80/tcp     laughing_khayyam
+
+    # docker container stop 2bb 
+    So this is going to stop our second container.
+    Now if we will check the running container using below command
+    # docker container ls ( notice ls only list the running containers and not all the containers. for all run with ls -a)
+    this will show us only one running container
+7) Now stop second running container as well and check all the container that we have
+    # docker container ls -a
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                      PORTS                NAMES
+    5af6d79a02a6        nginx               "/docker-entrypoint."   24 minutes ago      Exited (0) 9 seconds ago                         serene_meninsky
+    0670474d63e2        nginx               "/docker-entrypoint."   44 minutes ago      Created                                          gallant_germain
+    2bb013e087c7        nginx               "/docker-entrypoint."   3 hours ago         Exited (0) 14 minutes ago                        laughing_khayyam
+    e4b43398cfab        nginx               "/docker-entrypoint."   12 hours ago        Exited (255) 4 hours ago    0.0.0.0:80->80/tcp   fervent_mclean
+    So we have 4 containers listed here but none of them is running. There are two different commands:
+        a) docker container run ==> This basically starts a new container everytime we run this with the help of
+            specified image and 
+        b) docker container start ==> This starts the existing container,
+    Also notice that when we run docker container run command, we get our container ID generated for us from docker 
+    itself and also the name of container is also given by docker itself.
+8) Now lets create a new one 
+    # docker container run --publish 80:80 --detach --name webhost nginx
+    Notice this time we are giving container a name from our end.
+    check with # docker container ls
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                NAMES
+    d7b3895f070b        nginx               "/docker-entrypoint."   13 seconds ago      Up 13 seconds       0.0.0.0:80->80/tcp   webhost
+    This shows only one running container.
+9) Since this new container is running in the backgroud we can see its logs using below command
+    # docker container logs webhost
+    This will give the logs of container.
+10) another command that we can use is
+    # docker container top webhost
+    This gives us the processes running inside the docker container
+
+    UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+    root                4522                4501                0                   06:47               ?                   00:00:00            nginx: master process nginx -g daemon off;
+    101                 4572                4522                0                   06:47               ?                   00:00:00            nginx: worker process
+11) So now let see what all we have using below command
+    # docker container ls -a 
+    This wil list all the containers running and stopped as well
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                      PORTS                NAMES
+    d7b3895f070b        nginx               "/docker-entrypoint."   13 minutes ago      Up 13 minutes               0.0.0.0:80->80/tcp   webhost
+    5af6d79a02a6        nginx               "/docker-entrypoint."   43 minutes ago      Exited (0) 19 minutes ago                        serene_meninsky
+    0670474d63e2        nginx               "/docker-entrypoint."   About an hour ago   Created                                          gallant_germain
+    2bb013e087c7        nginx               "/docker-entrypoint."   4 hours ago         Exited (0) 33 minutes ago                        laughing_khayyam
+    e4b43398cfab        nginx               "/docker-entrypoint."   13 hours ago        Exited (255) 4 hours ago    0.0.0.0:80->80/tcp   fervent_mclean
+12) Now suppose we want to remove all the above container, but we have to stop first the one which is running.
+    note that we can't remove container which is running
+    So lets first stop that and then remove all
+    # docker container stop d7 
+    # docker conatiner rm d7 5a 06 2b e4     
+        d7
+        5a
+        06
+        2b
+        e4
+13) We could even do force remove in order to stop running container
+    # docker container rm -f <container ID>
+
+14) Another last point to note here is that container here is ran using image executable and the steps written in the
+    dockerfile for that image.
+15) instead of taking of default image for nginx we can also mention the version of nginx as below
+    # docker container run --publish 80:80 --detach --name webhost nginx:1.11 nginx -T(this last is command run on start)
