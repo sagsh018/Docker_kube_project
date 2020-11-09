@@ -1,0 +1,27 @@
+Things to node about container
+1) Container aren't Mini VM's
+2) Container are just the processes
+    Lets take an example of running up a new container using an image named "mongo"
+    => docker container run --name mongo --detach mongo
+        So since we don;t have mongo image locally so docker is going to download this from the docker hub
+    => docker container ls 
+        This is going to show a new container running with name mongo.
+    => docker container top mongo
+        Now this is going to show the process running inside the container for mongo.
+3) If you notice in the above steps we have listed the process running inside the mongo container using 
+    docker container top mongo command.
+    if we will search the same process on the local host(Linux VM running on VB in our case) you will find the same
+    process running there as well.
+    => docker-machine ssh
+    => ps -ef | grep -i mongo
+        999       4619  4598  2 21:19 ?        00:00:06 mongod --bind_ip_all
+    This is a same process running on the host machine for this container that is shown by the docker container top
+    command.
+4) So this shows that docker container is nothing but just a normal process running on host machine.
+5) if you stop it
+    => docker container stop mongo
+    => docker-machine ssh
+    => ps -ef | grep -i mongo  ===> now you won't find the same process running anymore.
+6) To start the stopped container again.
+    => docker container start mongo
+    

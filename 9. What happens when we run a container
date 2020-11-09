@@ -1,0 +1,20 @@
+So below are the steps taken place when we run docker container run command
+1) Docker looks for the image we are trying to run as container in the image cache. if it does not find it then,
+2) it looks for the same image in the remote repository of docker ( default to docker hub)
+3) Then it download the latest version of that image from docker hub by default. Note that we could also provide the version of the image   
+    to download as well.
+4) Then docker creates a new container based on that downloaded image and prepares it to start.
+5) Docker then configure the network of that container by giving a virtual IP on a private network inside the docker engine.
+6) Opens the port 80 on host and forward the port 80 in the container. Notice that since we have mentioned in our command to publish the ports 
+    than only docker taken the action otherwise docker does not do this by default.
+7) Finalyy it starts the container based on the commands writtin inside the Dockerfile of the image.
+
+We can modify out command and give many of the values and options at the time of running docker container run command. see the example below
+
+# docker container run --publish 8080:80 --name webhost -d nginx:1.11 nginx -T 
+    So here we have included the options for :
+    a) exposing the port 8080 on host machine(VM running inside our VB in our case) and mapping it to port 80 of container.
+    b) giving name of a container
+    c) giving -d option for --detach to that container runs in background process.
+    e) mentioned the name of image to be used along with the verion by using the colon.
+    f) finally we have also mentioned the command that will run when the first time container will start.

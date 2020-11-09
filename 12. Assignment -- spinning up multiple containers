@@ -1,0 +1,13 @@
+TASKS (docs.docker.com and --help are options available for help)
+========
+1) Run nginx, mysql, and httpd(apache) apache server
+2) run all three servers with -d and --name options
+3) nginx -- 80:80
+    httpd -- 8080:80
+    mysql -- 3306:3306
+4) while running mysql container use --env option to indicate one of the environment variable 
+    MWSQL_RANDOM_ROOT_PASSWORD=yes
+    and after running this container if you check you will find this random password in the logs
+5) Use docker container logs on mysql to find the random password it created on startup.
+6) Clean all up using docker container stop and docker container rm and both the command takes multiple docker ID's or name to stop
+7) Use docker container ls to make sure everthing is spinning as required before stoping and removing them
