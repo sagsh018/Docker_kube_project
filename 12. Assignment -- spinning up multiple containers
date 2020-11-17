@@ -6,8 +6,27 @@ TASKS (docs.docker.com and --help are options available for help)
     httpd -- 8080:80
     mysql -- 3306:3306
 4) while running mysql container use --env option to indicate one of the environment variable 
-    MWSQL_RANDOM_ROOT_PASSWORD=yes
+    MYSQL_RANDOM_ROOT_PASSWORD=yes
     and after running this container if you check you will find this random password in the logs
 5) Use docker container logs on mysql to find the random password it created on startup.
 6) Clean all up using docker container stop and docker container rm and both the command takes multiple docker ID's or name to stop
 7) Use docker container ls to make sure everthing is spinning as required before stoping and removing them
+
+Solution commands
+======================
+=> docker container run --publish 80:80 --name nginx_webserver -d nginx
+=> docker container run --publish 8080:80 --name apache_webserver -d httpd
+=> docker container run --publish 3306:3306 --name mysql_dbserver --env MYSQL_RANDOM_ROOT_PASSWORD=yes -d mysql
+=> docker container ls
+=> docker container logs mysql_dbserver
+    logs are reflecting the random root password
+    GENERATED ROOT PASSWORD: ieYaiChanah9Ayich6sooyoh4zo2ibi6
+=> docker container ls
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
+    db662b7a9158        mysql               "docker-entrypoint.s"   7 minutes ago       Up 2 minutes        0.0.0.0:3306->3306/tcp, 33060/tcp   mysql_dbserver
+    445135c2a090        httpd               "httpd-foreground"       9 minutes ago       Up 4 minutes        0.0.0.0:8080->80/tcp                apache_webserver
+    f8dfbc297a8b        nginx               "/docker-entrypoint."   13 minutes ago      Up 8 minutes        0.0.0.0:80->80/tcp                  nginx_webserver
+=> docker container stop db6 445 f8d 
+=> docker container ls -a 
+    shows stopped containers
+=> docker container rm db6 445 f8d

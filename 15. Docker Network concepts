@@ -1,0 +1,47 @@
+1) In this lecture we are going to go through below concepts:
+    => Review of "docker container run -p" -p/--publish option to map the port on host machine to the port on container machine and open them
+        for incoming traffic to the network and exposing to public network.
+    => Networking in docker comes with the concept of "Batteries included but removable" Which simply means that default networking options
+        which are already applied are easy to use with and helps a lot but you can always change them according to your need.
+        So for let say local dev/testing, networking usually just work.
+    => We will check command for quick port checking for container using below command. This basically gives us the output of what ports are 
+        open for the container on our network.
+        # docker container port <container>
+    => Learn the docker networks and virtual networks and how packets flow around the network
+    => Understand how network packets move around docker and how containers talk to each other and how it is different from exposing them to
+        outside public network.
+
+2) So when we actually start a container, we really in the background connecting to a perticular docker private virtual network. by default 
+    that is the bridge network.
+    "bridge" here is a default network driver used by docker to provide networking to containers.
+3) Once each container is connected to that private virtual network or bridge network, that private virtual network routes out through NATed
+    firewall, which actually a docker daemon configuring the host IP address on its default interface. So that our container can reach out
+    to the internet or to the rest of our network and then get back 
+4) Also note that all containers on this virtual private network can talk to each other without using -p/--publish option.
+5) Best practice is to create a new virtual environment for each application. For example:
+    a) we can create one network as "my_web_app" for mysql and php/apache containes, as they are related and want to talk to each other.
+    b) We can create another network as "my_api" for mongo and nodejs containers as they want to talk to each other while working.
+6) As we have seen before as well, docker works on "Batteries included, but removable". These means that whatever comes as default with docker 
+    works well in many cases, but it is wasy to swap out parts to customize it also.
+7) some of the changes that we can do here is that creating the new virtual networks. may be one per application or based on the security
+    requirements
+8) And similarly as that of physical computers can have two nic's attached to the same computer. we can have a container attached to more than 
+    one virtual network(or none)
+9) We could also skip this virtual network with which the container gets attached when started by using option (--net=host). This will make 
+    container have the same IP as that of host.
+10) We could also make use of different docker network drivers to gain new abilities.
+11) Now lets explore the above concepts using our command line as below
+    # docker container run -p 80:80 --name webserver --detach nginx
+    This -p/--publish option in the above command will publish the port from host->container format.
+    So this will forward the traffic comming from outside world on port 80 of host will be redirected to port 80 of 
+    container
+12) We could also check the port using the below command
+    # docker container port webserver
+        80/tcp -> 0.0.0.0:80
+    So this is showing the forwarding og traffic from port 80 of host to port 80 on container.
+13) We could below command to check out the IP associated with the container:
+    # docker container inspect --format "{{ .NetworkSettings.IPAddress }}" webserver
+        172.17.0.2
+    Notice that the IP address assigned to container is not the same as that of _default VM running on VMBox.
+14) The above docker network explaination is also explained in the diagram present in Docer_network.png file 
+    present in the same level of github. please do have a look at that.

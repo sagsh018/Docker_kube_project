@@ -1,0 +1,32 @@
+1) Here we are going to run docker commands in CLI to understand whats actually going on inside the container.
+2) Below are the commands we are going to use in order to check what actually going inside containers:
+    a) docker container top -- Gives process list in one container
+    b) docker container inspect -- Gives details of one container configuration
+    c) docker container stats -- Gives performance stats for all the containers running in kind of real time.
+3) So lets bring up two containers:
+    # docker container run --publish 80:80 --name webserver --detach nginx
+    # docker container run --publish 3306:3306 --name dbserver --detach --env MYSQL_RANDOM_ROOT_PASSWORD=yes mysql
+4) Check out both the containers
+    # docker container ls
+        CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS                               NAMES
+        3824cc70fd6d        mysql               "docker-entrypoint.s"   About a minute ago   Up About a minute   0.0.0.0:3306->3306/tcp, 33060/tcp   dbserver
+        0e29563c2f05        nginx               "/docker-entrypoint."   9 minutes ago        Up 9 minutes        0.0.0.0:80->80/tcp                  webserver
+5) Now lets start digging inside our container:
+    # docker container top webserver
+        This shows the process running inside the container.
+    # docker container top dbserver  
+        This is going to show us the mysqld daemon process running inside the container.
+    # docker container inspect webserver   
+        So this inspect command shows us the metadata about the container such as what is the startup configuration of the container, what all  
+        are the volumes, networking information about the container, etc in a JSON format.
+    # docker container inspect dbserver
+        same as above.
+6) So till now the above commands have given lots of data and metadata about the containers, but they didn't provided the live stats of the 
+    running container. To find that out we are going to make use of below commands
+    # docker container stats <container name is optional>
+        CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT     MEM %               NET I/O             BLOCK I/O           PIDS
+        3824cc70fd6d        dbserver            0.52%               325.1MiB / 985.4MiB   32.99%              1.01kB / 0B         40MB / 304MB        37
+        0e29563c2f05        webserver           0.00%               2.188MiB / 985.4MiB   0.22%               1.52kB / 0B         10.5MB / 8.19kB     2
+    So here we get the live stats about the container, like the CPU utilization, memory utilization, network I/O rate, Block I/O rate, etc
+    Also notice that we are not getting the name of the container here, we are just getting the container ID
+7) 

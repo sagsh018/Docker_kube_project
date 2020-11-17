@@ -1,0 +1,80 @@
+So here we are going to list down some of the command to handle docker network from command line.
+1) docker network ls -- To list all the available networks, alon with there name and driver type.
+2) docker network inspect <network name> -- Similar to docker container inspect, it gives the information about the network information    
+    in a JSON format.
+3) docker network create --driver <driver name> -- So this command helps us in creating the new virtual docker
+    network. Also this command gives the option to mention which network driver you want to use. default is 
+    "bridge". 
+4) docker container connect <network name> <container name> -- Used for connecting the container to a virtual 
+    network. similar to attaching the ethernet card in your physical computer.
+5) docker container diconnect <network name> <container name> -- Used for removing the container from network.
+
+NOTE
+====
+1) Note that "bridge" is a docker's default virtual network, which is NAT'ed  behind the Host IP.
+2) When we use command "docker network inspect <netowrk_name>" :: this gives us some information as below
+    a) container information - that is what all containers are part of this perticular network.
+            "Containers": {
+                "c604d6484c389782d3ff13a2ba5f84675bbf90e958515e484d055a1427a7c0c9": {
+                    "Name": "webserver",
+                    "EndpointID": "9e87fd182ff64b71ca196f51ca9acd6775fe04888284df6585c2d3a7f82a4be3",
+                    "MacAddress": "02:42:ac:11:00:02",
+                    "IPv4Address": "172.17.0.2/16",
+                    "IPv6Address": ""
+                }
+            }
+    b) This IPAM information :: This command also tells us what is the IP network subnet assigned to this 
+     virtual network and what is the gateway and subnet information
+            "IPAM": {
+                "Driver": "default",
+                "Options": null,
+                "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+                ]
+            }
+3) If we check all the networks available as of now, by using below command:
+    # docker netowrk ls
+        NETWORK ID          NAME                DRIVER              SCOPE
+        2bfe0c7b2167        bridge              bridge              local
+        2e9c9bc60c5d        host                host                local
+        ba884ba548a6        none                null                local
+    a) bridge -- default network driver created by default.
+    b) host -- As we have seen before this is a special network driver that skips virtual network and directly
+        attach the container with the host IP.
+        This has and advantage and disadvantage both:
+            i) Advantage : It improves the performance by reducing the network time by directly connecting the
+                container with host IP. In this case container IP is not NAT'ed 
+            ii) Dis advantage : This increases the security risk by removing the network model.
+    c) none -- This basically means no network. This is equavelent to having a interface on computer which is not
+        connected to anything and leaves you with just the localhost interface in container.
+4) Suppose we create a new network 
+    # docker network create NET -- This will create a network NET and by default add the NET to the default 
+        virtual network as we haven't mentioned the driver name.
+5) Now if you will verify the IPAM section of both the bridge and NET network created till now, you will notice
+     that the IP subnet taken for both the network is in the range 172.*
+    bridge :: subnet -- 172.17.0.0/16
+    NET :: subnet -- 172.21.0.0/16
+    So for the default driver of type bridge the network subnet will always be in the this network range of 172*
+6) we can attach the container to a perticular network at the time to creating it.
+    # docker container run --name new_nginx -d --network NET nginx
+    So this container is part of NEWT network already.
+    we can check this by using :
+        # docker network inspect NET
+        This will show container new_nginx under this network NET.
+7) While connecting the container to a network :: Docker dynamically creates a NIC in a container on an existing 
+    virtual network.
+8) similar to connect, disconnect basically dynamically removes a NIC from a container on a specific virtual
+    network.
+
+Docker Networks :: Default Security Good practices
+=====================================================
+1) Create your applications in a such a way that your frontend and backend of application sits on same docker
+    network
+2) The communication between the docker container should never go out of the host.
+3) All externally exposed ports are closed by default
+4) whenever want to expose the port/container to external network, always use -p/--publish option.
+5) This security gets even better later with swarm and Overlay networks.
+

@@ -1,0 +1,97 @@
+1) Here we are going to learn how to take a shell access inside the containers:
+2) There are two ways to take a shell access inside the containers, based on the state of the container:
+    a) if we are creating new container :: docker container run -it :: create and start new container.
+    b) if the container is stopped :: docker container start -ia :: start the container and attach and provide interactive shell 
+    c) if container is already running :: docker container exec -it :: execute the interactive shell for running container.
+3) Then we will also try to differentiate between the linux distros running as VM and that of running inside containers
+
+4) "-it" :: here we have two options used together:
+    a) -t/--tty -- This is used to allocate  a pseudo-tty to simulate the real terminal, like what ssh does.
+    b) -i/--interactive -- This is used to keep the SDTIN( standard input stream) open even if not attached, or to keep the session open to 
+        receive more terminal inputs.
+5) So lets try to start a new container for nginx with the interactive shell. Also we will pass a command the container should run at the start
+    in the end of command and that command will be "bash"
+    "bash" shell if run along with the -it in the command then it provides terminal inside the container.
+        # docker container run -it --name proxy nginx bash
+    So this will directly land me inside the container with the bash shell available to me as a root user inside the container.
+        root@ba66d4c8ea62:/#
+    Now to exit this container now we can use exit
+        #exit 
+    # docker container ls 
+        This will show you that the container is stopped
+    # docker container ls -a
+        Here you will see the container available as stopped container
+    IMPORTANT
+    =========
+    So the reason behind stopping of container on exiting is that, in normal case nginx container starts with the nginx process command and it
+    keeps on running untill stop the container manually.
+    but here while running the new nginx proxy container with above command we have changed the startup command for nginx container from
+    nginx process command to "bash" shell command.
+    and as soon as we exit the container, that bash shell process has stopped, which inturn stopped that running container as well.
+6) Now lets give it a try to run full centos version and get the interactive shell along with that :
+    # docker container run -it --name centos centos
+        This will give us the complete centos image running inside the container. and we will directly land up inside the container.
+        we can make use of all sorts of command that we use inside the VM or physical server having centos.
+        # yum update
+    The difference between the centos available inside the container and the once installed with the iso image available is that this
+    container image is minimal image with minimal required software installed on it. we can however make use of yum to download the packages
+    and install them
+        # yum install curl -y 
+        # curl google.com 
+7) and again when we exit the container with the help of exit command its going to stop the container as the default command which centos 
+    container run at the start is /bin/bash and as we exit the bash shell it will again stop the container.
+    # docker container ls
+        This will not list the centos container running.
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                      PORTS                               NAMES
+    40596f65cde2        centos              "/bin/bash"              10 minutes ago      Exited (0) 10 seconds ago                                       centos
+8) Now suppose if we want to start this stopped centos container and again want to get the interactive shell we could do it with the options
+    -ai ( a stands for attach and i stand for interactive)
+    # docker container start -ia centos
+    this will again land up in the container
+    [root@40596f65cde2 /]#
+    and this container will have the curl installed already, because we have started the same stopped container. but if we would have created 
+    a new container from image then curl would not be available automatically.
+9) Now lets try to gain the shell access to the container which is already running, lets say gain shell access to mysql server "dbserver"
+    # docker container exec -it dbserver bash
+        root@3824cc70fd6d:/#
+        So again we land up in the container with shell access.
+        after we have logged in lets install procps 
+        # apt-get update
+        # apt-get install procps -y
+        # ps -ef 
+            UID        PID  PPID  C STIME TTY          TIME CMD
+            mysql        1     0  0 07:07 ?        00:00:42 mysqld 
+        So we can see the same process which we got with the help docker container top command.
+        Now lets exit the container with exit command
+        # exit
+    And now again check the container status 
+    # docker container ls
+        we will see that container is still running even after exiting the container, because this time we have logged in with additional
+        process of bash wit the docker container exec command above and when we exit the container the bash process stopped but mysql process
+        is still running hance we have our container up now also.
+10) similarly we can also login to nginx container as well
+    # docker container exec -it webserver bash 
+11) Now lets try another linux version for docker that is alpine linux image on docker hub.
+    This linux image is minimal linux image which is of very small size and is not configured with any software, its just a basic OS 
+    Lets first pull the image
+    # docker image pull alpine
+    # docker image ls
+        REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+        centos              latest              0d120b6ccaa8        3 months ago        215MB
+        alpine              latest              d6e46aa2470d        2 weeks ago         5.57MB
+    So if you will notice alpine is such a small image of linux distro. its just 5.57 MB.
+12) lets try to run and have a interactive shell for this container
+    # docker container run -it --name small_linux alpine bash
+    This is going to throw an error because we have used bash as a login command to get the shell to access the container. but alpine is such
+    a small image of linux that it does not even contain bash installed in it.
+    so we have to make use of sh instead of bash
+    # docker container run -it --name small_linux alpine sh 
+    So like yum is package manager in centos and rhel. we have apk as a package manager inside alpine image. we can use that inside alpine
+    container to install bash 
+        # apk add bash
+        # which bash
+            /bin/bash
+        # exit
+    # docker container run -it --name small_linux alpine bash
+    This time it will work.
+    
