@@ -1,0 +1,102 @@
+So here in this lecture we are going to learn how to play with DNS and how it effects containers in custom
+network and default network.
+So below are the points taken care in this lecture:
+1) Understand how DNS is a key to easy inter-container communication. because we cannot rely always on IP addresses, as they are dynamic in nature
+    for example, if you have a running container and you stopped that and started it back again in different order, then it might have different 
+    IP address.
+2) See how it works by default with custom network. That is difference between how DNS is configured on the default "bridge" network and
+    DNS configuration inside the custom network we create.
+3) Learn how to use --link to enable DNS on default bridge network, because by default the DNS is not enabled in default bridge network.
+
+So as we have discussed above that relying on IP's for communication between containers let say is not a pattern to follow and we must avoid that
+as much as possible. because the IP's are dynamic in nature and they keep on changing even on the order the docker container is brought up.
+
+So there is a built in solution to overcome this IP's problem and that is DNS Naming.
+
+So Docker uses the container name as equivalent of the hostname for containers talking to each other 
+Note :: Docker Daemon has built in DNS server that containers use by default.
+
+Now lets have some practical:
+
+1) We already have one default "bridge" network and we have one our container named "webserver" part of it. We can see that by using below command
+    # docker network inspect bridge
+                "Containers": {
+                    "c604d6484c389782d3ff13a2ba5f84675bbf90e958515e484d055a1427a7c0c9": {
+                        "Name": "webserver",
+                        "EndpointID": "a2a2852901188d2d150c5d1885dc741734e8e30d25549a41f05a1186793be6c4",
+                        "MacAddress": "02:42:ac:11:00:02",
+                        "IPv4Address": "172.17.0.2/16",
+                        "IPv6Address": ""
+                    }
+                }   
+    Now notice that we have spunned the container without mentioning virtual network for this container. So this container became a part of 
+    default network. i.e. bridge network.
+    Notice that this default bridge network does not have a feature of what is called DNS container name resolution. and if we want that, than
+    we have to make use of --link option while spinning the container,
+2) Now lets create another network let say my_app_net
+    # docker network create my_app_net bridge
+        Now since this is also a bridge network, but it is the custom one we have created with name "my_app_net", and this one will have special
+        feature of automatic DNS name resolution for all the containers on this virtual network "my_app_net" to all the other containers on this
+        virtual network using container name.
+    To test this lets create two new containers on this my_app_net network.
+    # docker container run --name my_web_2 --detach --network my_app_net yobasystems/alpine-nginx
+    # docker container run --name my_web_2 --detach --network my_app_net yobasystems/alpine-nginx
+    So now we have two containers part of "my_app_net" virtual network. So since this is the custom network we have created and must have
+    automatic DNS name resoultion. So lets try it out
+    # docker container exec -it my_web_1 ping my_web_2
+    So we are able to ping the container my_web_2 from my_web_1 and vice verse 
+    # docker container exec -it my_web_2 ping my_web_1
+
+    NOTE:: Docker default the host name of container to the container name, but we can also set the aliases.
+
+    Now if we inspect out network my_app_net again we can see two containers part of it:
+    # docker network inspect my_app_net
+        "Containers": {
+            "0df1c61ed8a7dab32c01b779cc61b1b0dcacb2f9b35d8c3e31b166f31c73ae91": {
+                "Name": "my_web_1",
+                "EndpointID": "fba702141d6deb418675f3eb01c80e47886e55c4a42e6f951e444e21ba9c5b25",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            },
+            "abcc70fe8672f3796acb429ea8488c1197f7656230bc3f396aa631b8155e6f10": {
+                "Name": "my_web_2",
+                "EndpointID": "1c6fb13b837a1472735da3860e2a0e9d342201d7d0a2197b0e480fc38268dec3",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
+            }
+        }
+3) Now lets create two more containers in our default bridge network:
+    # docker container run --name small_linux_1 --detach --network bridge yobasystems/alpine-nginx 
+    # docker container run --name small_linux_2 --detach --network bridge yobasystems/alpine-nginx
+    So now we have two containers inside our default virtual network named "bridge". here also lets try to contact
+    one container from another with the help of container name/host name
+    # docker container exec -it small_linux_1 ping small_linux_2
+        ping: bad address 'small_linux_2'
+    So here we can see that name of the container is counted as bad address. So by automatic DNS name resolution is
+    not available in default network "bridge". As default bridge virtual network does not have DNS server available to it.
+4) To overcome this we could use --link option while running the container. After using this option DNS name resoultion will be possible
+    for these containers
+    lets first remove the containers : small_linux_1 and small_linux_2. and than create again with --link option in it.
+    # docker container stop small_linux_1 small_linux_2
+    # docker container rm small_linux_1 small_linux_2
+    Now lets create same containers with --link option
+    # docker container run --name small_linux_1 --detach --link webserver  --network bridge yobasystems/alpine-nginx
+    So here we had to link the new container small_linux_1 to already running container inside default bridge network to have automatic
+    name resoulution with container name:
+    # docker container exec -it small_linux_1 ping webserver
+    This will work, but the vice verse here will not work as we haven't linked from webserver to small_linux_1.
+    # docker container exec -it webserver ping small_linux_1
+        ping: small_linux_1: Name or service not known
+
+
+SUMMARY
+========
+1) Containers shouldn't really rely on IP's for inter-communication
+2) DNS for friendly names is built-in for cuxtom networks we create
+3) It is always recommended to use the custom networks instead of default bridge network to have a feature if automatic name resoulution
+4) These things gets even more easy with the help of docker-compose in further section
+
+
+ 

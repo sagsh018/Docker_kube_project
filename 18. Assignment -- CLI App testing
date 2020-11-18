@@ -1,0 +1,20 @@
+1) Use different linux distro containers to check curl cli tool version
+2) Use two different terminal windows to start bash in both centos:7 and ubuntu:14.04, using -it
+3) use docker contianer --rm option so we can save clean up time
+4) Ensure curl is installed and on latest version for that distro 
+    ubuntu : apt-get update && apt-get install curl 
+    centos : yum update -y && yum install curl.
+5) check curl --version.
+
+Solution
+========
+    # docker container run --name centos_curl  --rm -it --network my_app_net centos:7 bash
+        # yum update -y
+        # yum install curl -y
+        # curl --version
+            curl 7.29.0 (x86_64-redhat-linux-gnu) libcurl/7.29.0 NSS/3.44 zlib/1.2.7 libidn/1.28 libssh2/1.8.0
+    # docker container run --name ubuntu_curl --rm -it ubuntu:14.04 bash
+        # apt-get update
+        # apt-get install curl -y
+        # curl --version
+            curl 7.35.0 (x86_64-pc-linux-gnu) libcurl/7.35.0 OpenSSL/1.0.1f zlib/1.2.8 libidn/1.28 librtmp/2.3

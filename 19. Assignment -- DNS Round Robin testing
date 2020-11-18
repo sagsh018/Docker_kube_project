@@ -1,0 +1,73 @@
+1) So in this assignment we need basic understanding of DNS Records
+2) DNS Record :: This is simply a database that maps human friendly URL's to IP addresses. When someone types in a URL such as google.com, that entry
+    is sent to IPS, which is than forwarded to DNS server, and then directed to the proper web server using corresponding IP address as a label.
+3) DNS Round Robin Testing :: It is a concept that, you can have two different hosts with DNS aliases that respond to the same DNS name. For example:
+    google.com have more than one server, so the technique that big companies like google use to always make sure they are always up for 24*7 is
+    to apply DNS round robin as part of there stratergy so that there are multiple IP addresses in DNS records behind the name we use on internet
+4) So Even since Docker version 1.11, with the help of assigning aliases, we can have multiple containers on a created custom network respond 
+    to the same DNS address.
+5) So for this assignment we are going to first create a new virtual network (default bridge network) of any name 
+6) Then create two containers from elasticsearch:2 image. where elasticsearch is a datastore for search. This elasticsearch gives data in a JSON 
+    format when we hit it from curl. So we are going to use this elasticsearch as a quick test. 
+7) Then we will research and use --network-aliase search when creating containers to give them additional DNS name to respond to. So both the 
+    containers created above using elasticsearch image will have same DNS aliase 
+8) Run alpine nslookup search with --net to see the two containers list for the same DNS name. i.e. search, which we would give while creating
+    containers.
+9) Run centos curl -s search:9200 with --net multiple times untill you see both name fields show.
+
+Solution
+=========
+# docker network create dude
+# docker network ls 
+# docker container run -d --network dude --network-alias search elasticsearch:2
+# docker container run -d --network dude --network-alias search elasticsearch:2
+    So here since we haven't mentioned the names for two containers we have created above, docker is going to give them some friendly names.
+    but both will have same alias name :: search.
+
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                NAMES
+    7257eb99bbea        elasticsearch:2     "/docker-entrypoint."   6 minutes ago       Up 4 seconds        9200/tcp, 9300/tcp   gallant_hopper
+    66f0c86e329f        elasticsearch:2     "/docker-entrypoint."   7 minutes ago       Up 39 seconds       9200/tcp, 9300/tcp   heuristic_edison
+
+    NOTE::since we don't want to expose these containers to outside network, we have not used -p/--publish option with these containers.
+            So here the containers ports 9200(based on what is written in Dockerfile for this elasticsearch image) are exposed to internal
+            virtual network.
+# docker container run --rm --net dude alpine:3.10 nslookup search
+    Name:      search
+    Address 1: 172.19.0.2 search.dude
+    Address 2: 172.19.0.3 search.dude
+    So we got two results for one alias name "search" with the help of nslookup on name search.
+    We could also verify that these two IP's returned above are of the two elasticsearch containers spunned above
+    # docker container inspect gallant_hopper and heuristic_edison
+# docker container run --rm --net dude centos curl -s search:9200
+    {
+        "name" : "Mantra",
+        "cluster_name" : "elasticsearch",
+        "cluster_uuid" : "0DMI84NtSkqSEepwHK6NTQ",
+        "version" : {
+            "number" : "2.4.6",
+            "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+            "build_timestamp" : "2017-07-18T12:17:44Z",
+            "build_snapshot" : false,
+            "lucene_version" : "5.5.4"
+        },
+        "tagline" : "You Know, for Search"
+    }
+So this first time curl command to search alias on port 9200 has given name of elasticsearch server as "Mantra"
+    
+lets do it again
+# docker container run --rm --net dude centos curl -s search:9200
+    {
+        "name" : "Doppleganger",
+        "cluster_name" : "elasticsearch",
+        "cluster_uuid" : "CZQQmGe1SGGxW83gr53aWw",
+        "version" : {
+            "number" : "2.4.6",
+            "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+            "build_timestamp" : "2017-07-18T12:17:44Z",
+            "build_snapshot" : false,
+            "lucene_version" : "5.5.4"
+        },
+        "tagline" : "You Know, for Search"
+    }
+this time getting second name of elasticsearch server. So this is going to oscillate between these two elastic search servers and kind
+of balance the load. but this is not exact load-balancer because not working in a exact alternate way.
