@@ -1,0 +1,66 @@
+So in this lecture we are going to explore below concepts:
+    a) Imgae layers 
+    b) Union File system : which is used to represent a series of file system changes as an actual file system
+    c) We will understand history and inspect commands and try to under understand what an image actually made of.
+    d) We will understand the concept of copy on write where we will understand how container runs as an additional layer on top of an image.
+
+1) So basically images are designed using the Union file system concept of making layers about the changes. 
+2) So suppose we have nginx image and we want to see the history of this image :
+    # docker image ls 
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        nginx                      latest              daee903b4e43        4 days ago          133MB
+    # docker image history nginx
+        IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+        daee903b4e43        4 days ago          /bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon   0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  STOPSIGNAL SIGTERM           0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  EXPOSE 80                    0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  ENTRYPOINT ["/docker-entr   0B
+        <missing>           4 days ago          /bin/sh -c #(nop) COPY file:0fd5fca330dcd6a7   1.04kB
+        <missing>           4 days ago          /bin/sh -c #(nop) COPY file:13577a83b18ff90a   1.96kB
+        <missing>           4 days ago          /bin/sh -c #(nop) COPY file:e7e183879c35719c   1.2kB
+        <missing>           4 days ago          /bin/sh -c set -x     && addgroup --system -   63.6MB
+        <missing>           4 days ago          /bin/sh -c #(nop)  ENV PKG_RELEASE=1~buster     0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  ENV NJS_VERSION=0.4.4        0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  ENV NGINX_VERSION=1.19.4     0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  LABEL maintainer=NGINX Do   0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  CMD ["bash"]                 0B
+        <missing>           4 days ago          /bin/sh -c #(nop) ADD file:d2abb0e4e7ac17737   69.2MB
+    So this is basically a history of image layers.
+    So every image starts with from the very beginning with a blank layer known as scratch and than every set of changes that happens after that
+    on the file system in the image is another layer. 
+    And you might have one layer or dozen's of layers.
+    Also notice that some layers makes no change in terms of file size wherease some images do. for example :
+        daee903b4e43        4 days ago          /bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon   0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  STOPSIGNAL SIGTERM           0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  EXPOSE 80                    0B
+        <missing>           4 days ago          /bin/sh -c #(nop)  ENTRYPOINT ["/docker-entr   0B
+    These types of layer from the above layer history output shows some kind of metadat about an image action/command, but nothing added in 
+    terms of file size and
+        <missing>           4 days ago          /bin/sh -c #(nop) ADD file:d2abb0e4e7ac17737   69.2MB
+    These kind of layer added some data and hence making significance difference in file size.
+3) Now suppose if we go and check the history of other image let say mysql, than it will have different set of layers:
+    # docker image history mysql
+        IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+        db2b37ec6181        4 weeks ago         /bin/sh -c #(nop)  CMD ["mysqld"]               0B
+        <missing>           4 weeks ago         /bin/sh -c #(nop)  EXPOSE 3306 33060            0B
+        <missing>           4 weeks ago         /bin/sh -c #(nop)  ENTRYPOINT ["docker-entry   0B
+        <missing>           4 weeks ago         /bin/sh -c ln -s usr/local/bin/docker-entryp   34B
+        <missing>           4 weeks ago         /bin/sh -c #(nop) COPY file:f9202f6b715c0e78   13.1kB
+        <missing>           4 weeks ago         /bin/sh -c #(nop) COPY dir:2e040acc386ebd23b   1.12kB
+        <missing>           4 weeks ago         /bin/sh -c #(nop)  VOLUME [/var/lib/mysql]      0B
+        <missing>           4 weeks ago         /bin/sh -c {   echo mysql-community-server m   410MB
+        <missing>           4 weeks ago         /bin/sh -c echo "deb http://repo.mysql.com/a   55B
+        <missing>           4 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_VERSION=8.0.22-   0B
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_MAJOR=8.0          0B
+        <missing>           5 weeks ago         /bin/sh -c set -ex;  key='A4A9406876FCBD3C45   2.61kB
+        <missing>           5 weeks ago         /bin/sh -c apt-get update && apt-get install   52.2MB
+        <missing>           5 weeks ago         /bin/sh -c mkdir /docker-entrypoint-initdb.d    0B
+        <missing>           5 weeks ago         /bin/sh -c set -eux;  savedAptMark="$(apt-ma   4.17MB
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  ENV GOSU_VERSION=1.12        0B
+        <missing>           5 weeks ago         /bin/sh -c apt-get update && apt-get install   9.34MB
+        <missing>           5 weeks ago         /bin/sh -c groupadd -r mysql && useradd -r -   329kB
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  CMD ["bash"]                 0B
+        <missing>           5 weeks ago         /bin/sh -c #(nop) ADD file:0dc53e7886c35bc21   69.2MB
+    So all images has different set of layers based on how they are designed.
+4) Now let's try to understand the image layers in quite a more detail.
+    

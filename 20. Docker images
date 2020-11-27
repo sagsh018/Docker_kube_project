@@ -1,0 +1,18 @@
+In This section we are going to go throught the below concepts:
+
+1) All about images, the building blocks of containers
+2) Whats there in an image and what isn't.
+3) Using Docker Hub Registry
+4) Managing our local image cache
+5) Building our own image 
+
+What's in an Image (And what isn't)
+====================================
+1) So an images are binaries and dependancies for our applications and the metadata about the image data and how to
+    run that image.
+2) Am image is not a complete OS. There is no kernel inside an image, No kernel modules like drivers or anything. Its simply just a binaries that
+    application needs to run, and the host(on which this image run inside container) itself provide the kernel. And thats what make docker 
+    different from other virtual technologies. In docker, booting up a container with the help of an image is nothing but starting a new application.
+3) This image in docker could be as small as one file(app binary) like a golang static binary. Or i could be as Big as Ubuntu distro with apt,
+    and apache, PHP and more software installed.
+    

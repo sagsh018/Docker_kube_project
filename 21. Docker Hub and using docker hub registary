@@ -1,0 +1,92 @@
+So in this lecture we are going to have a look at the below concepts :
+a) We are going to understand basics of Docker hub
+    URL ==> hub.docker.com
+    Username ==> sagshar5
+    password ==> Check the local Document
+b) Then we will explore docker hub and try to find out the official images and also some of the useful other good
+    public images.
+c) Download images from docker hub and also understanding basics of image tags and difference between alpine imge and other image options.
+
+1) So lets login to hub.docker.com
+    The main docker hub page will container all our public and private docker repositories.
+2) At the top of this docker hub main page there is a option to search images, Let's search and image for nginx.
+3) This search will list all the available images for nginx in docker hub. 
+4) Now there are going to be lots and lots of images that will be listed, but out of that we are going to use only few specific images.
+5) We will mostly make use of official images only. and sometimes other images, which we could know are useful for us and are trustworthy.
+6) you can identify the official image with the keyword "official" associated with the image and also official image will not have a name in a 
+    format where there is a forward slash (/).
+7) The docker official image is basically maintained by the special docker team and they make sure that image works properly for what it is
+    intended and docker team also work with the team who is creator of this image closely.
+8) Wherease the images which users like us create have our docker hub account name (or) organization name in front of the image name.
+9) Now lets click on that official nginx image in the docker hub
+    One of the best thing about the official images is there documentation, it contain:
+    a) We have documentation on how to make this image work
+    b) What all options do we have to run this image
+    c) What all environment variables we have related to this image
+    d) Whats the default port to actually run the the application of this image
+    etc.
+10) Now one of the main thing about the official images is that they have different versions written on docker hub
+11) Now if we drill down on the versions of the images mentioned on the docker hub for nginx official image. We will notice :
+    a) 1.19.4, mainline, 1, 1.19, latest -- Which is the mainline/latest version of an image. Notice that 1.19.4, mainline, 1, 1.19 and latest  
+        are all the tags for this image. and we can actually pull this image with any one of these tags.
+    b) 1.18.0, stable, 1.18 -- This is stable version of nginx and its version is slightly lower than the mainline/latest image. again notice the
+        different tags associated with that
+    c) similarly we have different versions of mainline-perl, mainline-alpine and mainline-alpine-perl as below
+        1.19.4-perl, mainline-perl, 1-perl, 1.19-perl, perl
+        1.19.4-alpine, mainline-alpine, 1-alpine, 1.19-alpine, alpine
+        1.19.4-alpine-perl, mainline-alpine-perl, 1-alpine-perl, 1.19-alpine-perl, alpine-perl
+    d) Also we have same versions availabe for stable as well like, mainline-perl, mainline-alpine and mainline-alpine-perl.
+        1.18.0-perl, stable-perl, 1.18-perl
+        1.18.0-alpine, stable-alpine, 1.18-alpine
+        1.18.0-alpine-perl, stable-alpine-perl, 1.18-alpine-perl
+12) Now suppose if we want to download/pull this image:
+    a) docker pull nginx -- since we haven't mentioned any specific version or tag, so the most current version i.e. latest will be downloaded
+        ===============================================================================
+        Using default tag: latest
+        latest: Pulling from library/nginx
+        852e50cd189d: Pull complete
+        a29b129f4109: Pull complete
+        b3ddf1fa5595: Pull complete
+        c5df295936d3: Pull complete
+        232bf38931fc: Pull complete
+        Digest: sha256:c3a1592d2b6d275bef4087573355827b200b00ffc2d9849890a4f3aa2128c4ae
+        Status: Downloaded newer image for nginx:latest
+        docker.io/library/nginx:latest
+        ================================================================================
+        so if we notice the above output, we see that default tag that is downloaded is latest, as we haven't mentioned the tag/version.
+        Also the image is pulled in the form of different layers
+        Also notice that we have something called sha256 which will help docker to compare the image in local repo and the one on docker hub,
+            if docker find the image with same sha256 code already present in the local system, than docker will not download it from 
+            docker hub, otherwise docker will pull/download the image.
+        Now since we have downloaded this image of nginx without passing any tag. let say we pass one tag to this pull command for same latest
+        image :: 1.19.4
+    b) docker pull nginx:1.19.4
+        =================================================================================
+        1.19.4: Pulling from library/nginx
+        Digest: sha256:c3a1592d2b6d275bef4087573355827b200b00ffc2d9849890a4f3aa2128c4ae
+        Status: Downloaded newer image for nginx:1.19.4
+        docker.io/library/nginx:1.19.4
+        =================================================================================
+        So since we have already downloaded the same version before with the default tag latest, and this time docker compared the sha256 of
+        available image in local repo to the one we are trying to download from docker hub and since both are same, docker is not going to
+        download it.
+    c) similarly we can also download the same image with tag "1", 1.19, mainline, etc. but all of them will have the same image ID, because 
+        the image ID of images is created few initials of sha256 cryptographic 
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        nginx                      1                   daee903b4e43        4 days ago          133MB
+        nginx                      1.19.4              daee903b4e43        4 days ago          133MB
+        nginx                      latest              daee903b4e43        4 days ago          133MB
+        So if we notice these three images are not separate, these all are one image with different tags. 
+    d) Also we have something called as nginx-alpine, which is very small version of nginx and it comes from the base image and very 
+        small in size as compared to actual nginx image.
+        docker pull nginx:1.19.4-alpine 
+        nginx                      1.19.4-alpine       e5dcd7aa4b5e        2 weeks ago         21.8MB
+        See its just 21.8 MB 
+13) Now lets go back to the page where we have seen multiple images available for nginx.
+    Notice that nginx is a opensource, so we can download the official image or any other image and modify them according to our own functionality
+    and then upload them again under your own name. we can modify the image with the help of modifying the Dockerfile, which we will see later.
+14) Now if we want to pull any other image and not the official one than we can make a decision on the basis of maximum number of pull for an image
+    and number of stars given to that image. so if image have more pulls that means i can trust it and than i will validate it and use it.
+15) There is another thing on the docker hub main page which is "Explore" and this takes us to the page where we have all sorts of images,
+    official, non official and also the docker installation images, various container images and also the plugins with all sorts of filter.
+
