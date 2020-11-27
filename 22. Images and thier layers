@@ -62,5 +62,17 @@ So in this lecture we are going to explore below concepts:
         <missing>           5 weeks ago         /bin/sh -c #(nop)  CMD ["bash"]                 0B
         <missing>           5 weeks ago         /bin/sh -c #(nop) ADD file:0dc53e7886c35bc21   69.2MB
     So all images has different set of layers based on how they are designed.
-4) Now let's try to understand the image layers in quite a more detail.
+4) Now let's try to understand the image layers in quite a more detail. 
+    So understand image layers in better details lets have a look at some of the visualizations
+    a) Basic intro on how an image is built using multiple layers.
+        refer ==> Docker_image_visualization_in_multiple_layers.png (In same repo)
+    b) This image is going to describe how docker maintain only one copy of all the layers and build multiple
+        images off of same base/first layer
+        refer ==> Docker_image visualization_coming_off_of_same_first_layer.png (In same repo)
+    c) This image is going to describe how two images that differs only based on last layer for copy data of
+        differnt apps, make use of same stack of multiple layers.
+        refer ==> Docker_image_visualization_of_layers_stack_shared_by_two_images.png
+    d) This image explains on how image layer works with containers running off of it.
+        refer ==> Docker_image_visualization_on_how_image_layer_works_with_container_layer.png
+
     
