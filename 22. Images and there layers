@@ -74,5 +74,51 @@ So in this lecture we are going to explore below concepts:
         refer ==> Docker_image_visualization_of_layers_stack_shared_by_two_images.png
     d) This image explains on how image layer works with containers running off of it.
         refer ==> Docker_image_visualization_on_how_image_layer_works_with_container_layer.png
-
+5) Now lets go back to our image history list of layers for let say mysql:
+    # docker image history mysql
+        IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+        db2b37ec6181        5 weeks ago         /bin/sh -c #(nop)  CMD ["mysqld"]               0B
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  EXPOSE 3306 33060            0B
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  ENTRYPOINT ["docker-entry   0B
+        <missing>           5 weeks ago         /bin/sh -c ln -s usr/local/bin/docker-entryp   34B
+        <missing>           5 weeks ago         /bin/sh -c #(nop) COPY file:f9202f6b715c0e78   13.1kB
+        <missing>           5 weeks ago         /bin/sh -c #(nop) COPY dir:2e040acc386ebd23b   1.12kB
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  VOLUME [/var/lib/mysql]      0B
+        <missing>           5 weeks ago         /bin/sh -c {   echo mysql-community-server m   410MB
+        <missing>           5 weeks ago         /bin/sh -c echo "deb http://repo.mysql.com/a   55B
+        <missing>           5 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_VERSION=8.0.22-   0B
+        <missing>           6 weeks ago         /bin/sh -c #(nop)  ENV MYSQL_MAJOR=8.0          0B
+        <missing>           6 weeks ago         /bin/sh -c set -ex;  key='A4A9406876FCBD3C45   2.61kB
+        <missing>           6 weeks ago         /bin/sh -c apt-get update && apt-get install   52.2MB
+        <missing>           6 weeks ago         /bin/sh -c mkdir /docker-entrypoint-initdb.d    0B
+        <missing>           6 weeks ago         /bin/sh -c set -eux;  savedAptMark="$(apt-ma   4.17MB
+        <missing>           6 weeks ago         /bin/sh -c #(nop)  ENV GOSU_VERSION=1.12        0B
+        <missing>           6 weeks ago         /bin/sh -c apt-get update && apt-get install   9.34MB
+        <missing>           6 weeks ago         /bin/sh -c groupadd -r mysql && useradd -r -   329kB
+        <missing>           6 weeks ago         /bin/sh -c #(nop)  CMD ["bash"]                 0B
+        <missing>           6 weeks ago         /bin/sh -c #(nop) ADD file:0dc53e7886c35bc21   69.2MB
+    if we notice the image layers starting from bottom, we notice that last 10 layers of image are updated 6 weeks ago where as top 10 rows shows
+    that those parts of the image are updated 5 weeks ago on Docker hub
+    So we can see that same copy of last 10 layers are used and they are not updated in docker hub.
+6) Also notice in the above output we have something "missing" which is just a way of showing in Docker that every layer does not have image ID
+    and entire image that makes up has a image ID and which is shown by line 1 in the above output.
+7) Now finally lets talk about inspect command for an image. So inspect command for an image returns the information about an image which is
+    basically the metadata about an image and this metadata is returned in a JSON format.
+8) Note that image is composed of two parts :
+    a) Binaries and its dependency
+    b) metadata about that image
+    So basically inspect command gives back that metadat in a JSON format.
+9) if you go through this returned JSON metadata from inspect command then you will notice that this command not only return the image ID
+    and basic information but also return the information about how to run this image, like:
+    a) what ports need to be exposed in order to run this image
+    b) What all environment variables need to be passed while running this image
+    c) What command will run when you start up the image by default 
+    d) Also some information regarding the hardware architecture and OS version required to run this image.
     
+Summary 
+========
+1) Images are made up of file system changes( which actually creates layers inside image) and metadata
+2) Each layer is uniquely identified with the SHA identity value and only stored once on a host 
+3) This saves lots of space on host and also the transfer time on push and pull from registaries(docker hub) is less 
+4) A container is just a single read/write layer on top of image 
+5) Then we have also learnt about the docker image history and inspect command and what they can teach us.

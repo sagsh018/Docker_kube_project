@@ -1,0 +1,147 @@
+1) So in this lecture we are going to go through below concepts:
+    a) All about the image tags.
+    b) How to upload image to docker hub
+    c) Image ID vs. tags
+2) So we will first have a look at image tagging:
+    # docker image tag ==> Used to assign one or more tags to an image
+    # docker image tag --help
+        To see what all options are available to use with tag command
+3) if we list all the images available with us we will notice that there is no name column for an image. and thats because images in docker
+    are not refered by names.
+4) There are three things that we can use to refer an image:
+    a) User -- who created that image, this could also be organisation name
+    b) repo -- name of the repo on docker hub
+    c) tag -- used to reference the image.
+5) Now all these three pieces of information is kept in below format on docker hub,
+    <user>/<repo>:<tag>  :: Note that default tag is "latest" and is not specified, and taken by default.
+6) Now if we list down the images available locally in docker cache, most of the time we will just see two pieces of information. i.e. repo name
+    and tag name. 
+    The reason is that most of the time we work with official images on docker hub and official images in docker hub are only refered by the 
+    repo name and these images are directly present at the root namespace of a registry so they don't need account name in front of them.
+    whereas the custom images which user or any organization build need to be appended with the <user> or <organization> name followed by /
+    and then the name of the repo.
+    ==============================================================================================
+    REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+    nginx                      1                   daee903b4e43        10 days ago         133MB
+    yobasystems/alpine-nginx   latest              4e83535b522d        6 months ago        33.5MB
+    ===============================================================================================
+    So if we notice in the above sample output for an image listing we notice that, for an official image of nginx only the name of repo and
+    tag name is present along with Image ID
+    whereas for alpine image created by one of the organization, hence its name is appended with the organisation name both here in this image 
+    list and also on the docker hub registry 
+7) Similarly when we pull the these images the way of writing them is different :
+    a) official image :: docker pull nginx :: So notice we have just given the repo name and by default the latest image tag will be pulled
+    b) Non offical image :: docker pull yobasystems/alpine-nginx :: here we have used the organisation/account/user name in front of image 
+        repo to pull that down from docker hub.
+8) Now tags in docker are not quite a specific version neither they are specific branch.
+    Tags in docker are kind of more like git tags.
+9) These tags in docker are nothing but a pointer to a specific image commit in the docker hub registry.
+10) Now lets go back to docker hub and search for an offical image of nginx.
+    if we see the starting of the image description, we see that there are many tags available for different commits of an image
+    for example:
+        1.19.5, mainline, 1, 1.19, latest --- these all tags represent image with same Image ID
+        1.19.5-alpine-perl, mainline-alpine-perl, 1-alpine-perl, 1.19-alpine-perl, alpine-perl -- similarly these all present image of same             
+                                                                                                    image ID
+11) Notice the below tags of the same image ID Pulled :
+    REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+    nginx                      1                   daee903b4e43        10 days ago         133MB
+    nginx                      1.19.4              daee903b4e43        10 days ago         133MB    
+    So here both the tags "1" and "1.19.4" stands for same image ID.
+12) So again we have only one copy of the above image available in our cache, but there are two tags pointers pointing to the same image ID
+13) Now lets create our own tags as well. So we can create a new Dockerfile and hence a new image and give tag name to that
+14) but what we can also do is that we can also change the tag for an existing image in our cache by using docker image tag command
+    syntax :: docker image tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+    # docker image ls 
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        nginx                      1                   daee903b4e43        10 days ago         133MB
+        nginx                      1.19.4              daee903b4e43        10 days ago         133MB
+    So lets try to modify the tag "1.19.4" of nginx above.
+    # docker image tag nginx:1.19.4 sagshar5/nginx:latest
+    Notice that in above command we have mentioned tag as latest, this is by default and not mendatory to mention it. latest is just default
+    and represents the genuine stable release which we can use.
+    # docker image ls   
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        sagshar5/nginx             latest              daee903b4e43        10 days ago         133M
+        nginx                      1.19.4              daee903b4e43        10 days ago         133MB
+    So the tag of "1.19.4" is modified and we have added a new tag for the same image ID, which we didn't even created.
+15) So now we can also push the this new tag with the help of docker image push command and this command will upload the changed layers of this
+    image to a image registry.
+    # docker image push sagshar5/nginx
+        ========================================================
+        The push refers to repository [docker.io/sagshar5/nginx]
+        b9e73ac5343e: Preparing
+        5887d03dfc3d: Preparing
+        e3a971c30b12: Preparing
+        32048dd980c7: Preparing
+        f5600c6330da: Preparing
+        denied: requested access to the resource is denied
+        ========================================================
+        So we are getting this access denied because we haven't logged in from our command cli to docker hub.
+        we can do so using the below command
+        # docker login <server Url> :: notice that docker login default to logging in Hub, but you can override this by adding server Url
+            as mentioned in the commmand syntax.
+    # docker login
+        =======================================================================================
+        Username: sagshar5
+        Password:
+        WARNING! Your password will be stored unencrypted in C:\Users\Sagar\.docker\config.json.
+        Configure a credential helper to remove this warning. See
+        https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+        Login Succeeded
+        =========================================================================================
+        Now if you notice in the above output, it says that the password/key to access Docker hub as my local user sagar from Docker cli
+        is stored in the given directory : C:\Users\Sagar\.docker\config.json in a json format
+            {
+	            "auths": {
+		            "https://index.docker.io/v1/": {
+			        "auth": "c2Fnc2hhcjU6SXNod2FydXNtYXkxOTkyMjA="
+		            }
+	            },
+	            "HttpHeaders": {
+		            "User-Agent": "Docker-Client/19.03.1 (windows)"
+	            }
+            }  
+        So whereever you login to Docker Hub from Docker CLI, by default its going to store this authentication key/password for the local
+        user account in its profile.
+        So this is a very important step to take if we are logged into to our Docker hub account from some machine which we don't trust then
+        we must logout immediately after our use from docker using Docker Cli command:
+    # docker logout
+16) Now lets try to push that image again with the modified tag :
+    # docker image push sagshar5/nginx
+        notice that we are not mentoning the tag here as latest, becuase that is by default.
+        ==================================================================================================
+        The push refers to repository [docker.io/sagshar5/nginx]
+        b9e73ac5343e: Mounted from library/nginx
+        5887d03dfc3d: Mounted from library/nginx
+        e3a971c30b12: Mounted from library/nginx
+        32048dd980c7: Mounted from library/nginx
+        f5600c6330da: Mounted from library/nginx
+        latest: digest: sha256:bb84ff0786cd1dbde780d84f6bf76bfdef36fe8ffa658f7f5c48e39363b4d500 size: 1362
+        ===================================================================================================
+        So this time it has pushed successfully.
+17) Now suppose i assign a new tag to sagshar5/nginx image other than "latest", let say "testing"
+    # docker image tag sagshar5/nginx:latest sagshar5/nginx:testing
+        notice that we are mentioning the old tag as latest which is not mendatory and can also be taken by default so we can also write as 
+        below
+    # docker image tag sagshar5/nginx sagshar5/nginx:testing
+        sagshar5/nginx             latest              daee903b4e43        10 days ago         133MB
+        sagshar5/nginx             testing             daee903b4e43        10 days ago         133MB
+        So we have another tag "testing" pointing to the same image ID
+18) Now lets upload this new tag as well
+    # docker image push sagshar5/nginx:testing
+        ===================================================================================================
+        The push refers to repository [docker.io/sagshar5/nginx]
+        b9e73ac5343e: Layer already exists
+        5887d03dfc3d: Layer already exists
+        e3a971c30b12: Layer already exists
+        32048dd980c7: Layer already exists
+        f5600c6330da: Layer already exists
+        testing: digest: sha256:bb84ff0786cd1dbde780d84f6bf76bfdef36fe8ffa658f7f5c48e39363b4d500 size: 1362
+        ===================================================================================================
+        So if we notice the above output it says that "Layer already exist" and thats our awesome Docker work, which means that
+        since we are just uploading the new tag for the same image, and the image and its layer are same and no modification is done,
+        hence Docker will not upload them again. Same will be the case with Downloading
+19) Notice that currently we have pushed the images to a public repo on docker hub, if we want to make it a private, then
+    we first have to create a private repo by selecting the option as provite while creating it and then push it to that private repo.
+        Docker Hub main page >> Create new repo >> Visibility >> select private.
