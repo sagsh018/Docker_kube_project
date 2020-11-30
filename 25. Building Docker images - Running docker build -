@@ -1,0 +1,88 @@
+1) So right now we have a Dockerfile in our workspace inside dockerfile-sample-1 and it has instructions on how to build our image.
+2) and thats what we are going to do in this lecture. we are going to build our image.
+3) So the FROM command when we build this image its going to pull that debian:stretch-slim image from docker hub down to my local cache and 
+    then ts going to execute line by line each of those stanza's inside my docker engine and create layers and cache them.
+4) So lets build the image using this referenced Dockerfile
+    # pwd
+        /c/Users/Sagar/projects/Docker_kube_project/dockerfile-sample-1
+    # docker image build -t customnginx .
+        notice:
+            a) we have used -t to give repo name and since we are going to make use of this image in our local system and not uploading it
+                to docker hub, we haven't mention the account name in front of the repo name. and since we are not mentioning the tag name  
+                here after ":" so this image will be auto tagged to latest.
+            b) Also notice that we have given "." in the last of this command and by that we are telling docker to build the image using the
+                Dockerfile in this current directory.
+        output(sample output)
+        ===============================================================================
+        Step 1/7 : FROM debian:stretch-slim
+        stretch-slim: Pulling from library/debian
+        4297e0229558: Pull complete
+        Digest: sha256:a13a7572d0ec41879a9a64bbdd53fffa701dbcc09732543c6d43b130e2ef76c5
+        Status: Downloaded newer image for debian:stretch-slim
+            ---> 5b7b115fa817
+        Step 2/7 : ENV NGINX_VERSION 1.13.6.1~stretch
+            ---> Running in 2c5da4d7655c
+        Removing intermediate container 2c5da4d7655c
+            ---> 7b477276ae9a
+        Step 3/7 : ENV NJS_VERSION 1.13.6.0.1.14-1~stretch
+            ---> Running in 18dd3605723e
+        Removing intermediate container 18dd3605723e
+            ---> c8eae854b769
+        -----------
+        ------------
+        So on
+        ===================================================================================
+        So if you notice the above sample out from the command docker image build using the Dockerfile:
+            a) Each step showing above  is a line in the Dockerfile, that is executing inside this image as its building it.
+            b) Then at the end of each step there is a little hash for example "5b7b115fa817" which is actually a hash which docker keeps in the
+                build cache, so that next time we build this image using the same Dockerfile, if that line correspnding to the step does not
+                change in the Dockerfile, then its not going to rerun it. and this is going to save us a lot of build time.
+5) Now lets try to see the image created in our system
+    # docker image ls 
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        customnginx                latest              d533a21b0a16        42 seconds ago      190MB
+        So here the name we have given to the repo while building an image was customnginx and same is assigned.
+        also we haven't mentioned any tag for this image, hence it is defaulted to latest.
+6) Now suppose i go back to the Dockerfile and add one more port to listening that "8080", So by doing this i am allowing the container to
+    receive packets on this port as well along with 80 and 443.
+    So add and save the Dockerfile and rerun the image build command
+    # docker image build -t customnginx .
+    output
+    ======
+        Step 1/6 : FROM debian:jessie
+            ---> af91926d63c5
+        Step 2/6 : ENV NGINX_VERSION 1.15.12-1~jessie
+            ---> Using cache
+            ---> e2911b332973
+        Step 3/6 : RUN apt-key adv --keyserver hkp://key&& apt-get update 80 --r&& apt-get install --no-install-recommends --no-install-suggests -y  http://nginx.org/packages/mainline/debiaca-certificates  >> /etc/apt/sources.list                nginx=${nginx-module-image-filter                               nginx-module-xslnginx-module-perl                            nginx-module-njs p                                               gettext-base    && rm -rf /var/lib/apt/lists/*
+            ---> Using cache
+            ---> 069187fb475b
+        Step 4/6 : RUN ln -sf /dev/stdout /var/log/nginx/access.log     && ln -sf /dev/stderr /var/log/nginx/error.log
+            ---> Using cache
+            ---> 439cb886d02f
+        Step 5/6 : EXPOSE 80 443 8080
+            ---> Running in ab64985356bf
+        Removing intermediate container ab64985356bf
+            ---> 937ed9193ded
+        Step 6/6 : CMD ["nginx", "-g", "daemon off;"]
+            ---> Running in bbeeaaeceee6
+        Removing intermediate container bbeeaaeceee6
+            ---> 8154b124d726
+        Successfully built 8154b124d726
+        Successfully tagged customnginx:latest
+    Things to note::
+        a) It took much less time to build the image this time, because most of the lines in Dockerfile were not changed. So faster build time.
+        b) Note that Docker is using the cache starting from step 2, step 3, step 4. becuase these lines are not changed in Dockerfile and
+            docker found the same hash value in the build cache for that line. hence it has used the cache and didn't rerun that line.
+        c) Now at line 5, docker find that the the line in Dockerfile changed and extra port is added, hence it ran that line, added that
+            port in the list of exposed port for that container and added new Hash in the build cache.
+        d) No notice that after that port exposed line, docker is not using build cache anywhere and ran all the lines below that. Thats 
+            becuase when any line changed in the Dockerfile, Docker rerun all the lines below that changed line.
+        e) So from the above point we should learn that order of commands in Dockerfile is very important, for example, if we keep the source
+            code of some app at the top in Dockerfile, then everytime you make changes to that source code, the Docker will have to build 
+            the entire Dockerfile again.
+            So rules for that:
+                i) Keep those things at the top in Dockerfile that change the least.
+                ii) Keep those things at the bottom in Dockerfile that change the most.
+        
+    

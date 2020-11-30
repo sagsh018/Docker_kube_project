@@ -1,0 +1,44 @@
+1) So here we are going to understand how are images getting build
+2) So the Dockerfile is a file responsible behind the creation of an image. whatever we write inside the Dockerfile, the image is build based
+    on that.
+3) Few points to note about the Dockerfile is that 
+    a) it is always referenced by the name "Dockerfile" with capital D
+    b) Dockerfile is not having the shell script although it looks like one, its totally different language which is unique to Docker 
+    c) Whenever we want to deal with some other file name given to Dockerfile, we can do it from the command line sing docker command as below
+        # docker build -f some-Dockerfile
+       Notice that here the name of the Dockerfile is not default and hence we have used -f option to make docker forcefully accept this
+       file as Dockerfile.
+4) Now lets create our first Dockerfile for nginx webserver.
+    refer ==> dockerfile-sample-1/Dockerfile in the same workspace.
+5) Few notes about the image written in the refered Dockerfile  
+    a) We are starting with the minimal linux distribution (Debian) as out first layer of image, because these
+        minimal distributions like Debian, centos, ubuntu & Fedora are miniaml and size and official images, patched
+        with latest updates. and also because of there package managers in them like apt, yum, etc.
+    b) Notice that in Dockerfile every new stanza creates a new layer, so we have to be careful while writing as these stanza must be in 
+        correct order.
+    c) for example FROM creates the first layer, ENV creates second layer on top of it, RUN creates another layer and so on, These layers work
+        Top to Down in order.
+    d) You usually see RUN commands inside the Dockerfile when you need to run any shell commands inside the container at build time.
+        for example, say you want to install software from package repo, say yu want to do some unzipping, you want to do some file edits inside 
+        the container itself
+    e) Also notice that RUN commands can run shell scripts that you copied inside container earlier usinf FILE command or any other command
+        that you can run inside container.
+        So since we are using Debian as our base layer, so we can put in any command inside the RUN stanza that comes up with the debian release.
+6) Now Notice the RUN command in the refered Dockerfile :
+    a) We are adding a key to repository from where you can get the package to install latest inginx from official nginx repository
+7) There are some good practices that we must follow while writing the Dockerfile:
+    a) We use "&&" with every new command, so that they are chained one after the other, to ensure that all the commands fits into one single
+        layer so that it can save us some time, space 
+8) Then there is another RUN command that forward request and error logs to docker log collector. So the proper way to do the logging inside a 
+    container is to not log to a log file. and there are syslogd, or anysuch kind of daemon running inside the container. Docker actually 
+    handles all of our logging for us.
+    So we have to make sure is that, whatever we want to record in the logs must be forwarded to stdout and stderr inside the container which 
+    this RUN command is doing in refered Dockerfile
+9) So there are actually logging drivers we can use inside docker engine itself to control all the logs for all te containers on our host
+10) Then we have EXPOSE command in our Dockerfile. By default no TCP or UDP ports are opened inside the container, docker does not expose anything
+    from a contianer to the virtual network unless we list it here in the Dockerfile.
+11) last one in our refered Dockerfile is CMD. This is a required parameter and this is a final command that is going to run everytime you 
+    launch a new container from the image or everytime you restart the stopped container.
+12) Dockerfile creation reference ==> https://docs.docker.com/engine/reference/builder/
+
+    
