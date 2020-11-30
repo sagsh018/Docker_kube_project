@@ -1,0 +1,67 @@
+1) So here in this lecture we are just going to make use of the official Docker image from docker hub and try to extend the functionality of 
+    it by adding some extra lines in the Dockerfile
+2) So for this refer to below mentioned Dockerfile
+    refer ==> dockerfile-sample-2/Dockerfile.
+3) So in this Dockerfile we are going to extend the nginx image and add some more lines in our Dockerfile, like
+    a) we will try to change the Working directory inside our container
+    b) and then we will copy one of the sample index.html file to our container.
+        refer dofkerfile-sample-2/index.html 
+4) Please have a look at the Dockerfile for better understanding.
+5) Note in the Dockerfile we have not mentioned any staza related to exposing the PORT for this webhost and also not mentioned stanza related
+    to CMD. These are already inherited from the official image when we used FROM nginx in our Dockerfile.
+6) So now its time to build the image using our Dockerfile.
+7) But first lets see what a default/official nginx webserver page must look like
+    # pwd   
+        /c/Users/Sagar/projects/Docker_kube_project
+    # docker container run -p 80:80 --rm nginx  
+        So here we are making use of the official image of nginx which we have already downloaded before to run our container.
+        After bringing up the container in foregroung, lets check how default web page looks for nginx
+        Web browser ==> http://docker.engine:80
+        =====================================================================================================================
+        Welcome to nginx!
+        If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+        For online documentation and support please refer to nginx.org.
+        Commercial support is available at nginx.com.
+
+        Thank you for using nginx.
+        ======================================================================================================================
+        Now lets just stop it 
+        # docker container stop 8ad8affad9ba
+        notice removing the container is not required as we have given --rm option so it got auto removed itself.
+8) Now we will build our image with the new Dockerfile we have created by extending the nginx image from docker hub
+    # cd dockerfile-sample-2
+    # docker image build -t nginx-with-html .
+        ==============================================
+        Step 1/3 : FROM nginx:latest
+            ---> daee903b4e43
+        Step 2/3 : WORKDIR /usr/share/nginx/html
+            ---> Running in ecc28b689939
+        Removing intermediate container ecc28b689939
+            ---> 4208ce35bf93
+        Step 3/3 : COPY index.html index.html
+            ---> 201211307502
+        Successfully built 201211307502
+        Successfully tagged nginx-with-html:latest
+        =============================================
+        So we can see that image building has taken very less time, because we already had nginx official image in our cache and this build
+        just changed the directory inside a container and copied the index.html file.
+        # docker image ls 
+            REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+            nginx-with-html            latest              201211307502        10 minutes ago      133MB
+9) Now lets run our container using the this custom image created.
+    # docker container run -p 80:80 --rm nginx-with-html
+    Then run in browser http://docker.engine:80
+    ===============================================================================================
+    You just successfully ran a container with a custom file copied into the image at build time!
+    ===============================================================================================
+10) Now lets modify the repo name of this created image nginx-with-html so that we can upload it to docker hub under our account name
+    # docker image tag nginx-with-html:latest sagshar5/nginx-with-html:latest
+    # docker image ls
+        REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+        nginx-with-html            latest              201211307502        20 minutes ago      133MB
+        sagshar5/nginx-with-html   latest              201211307502        20 minutes ago      133MB
+        So now we have to image repo name with pointing to same image ID
+        Lets upload them to docker hub now
+    # docker push sagshar5/nginx-with-html
+    
