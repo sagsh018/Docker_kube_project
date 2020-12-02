@@ -1,0 +1,9 @@
+1) Use a jekyll "static site generator" to start a local web server
+2) Don't have to be a web developer for this assignment: this is an example of bridgeing the gap between local file access and apps running 
+    in container
+3) source code is under bindmount-sample-1/
+4) we will edit the files under this directory using our native editor 
+5) container detects the changes with the host files and update the webserver
+6) start the container with : docker container run -p 80:4000 --detach -v //c/Users/Sagar/projects/Docker_kube_project/bindmount-sample-1:/site bretfisher/jekyll-serve
+7) refresh the browser to see changes
+8) change the file in _posts/ and refresh browser to see the changes.

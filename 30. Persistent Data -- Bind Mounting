@@ -1,0 +1,57 @@
+1) Bing mounts:
+    a) Maps the hostsfile or directory to the container file or directory.
+    b) This is basically just two locations pointing to the same file on Disk
+    c) Bind mount skips the UFS(Union File system) that means that even if you remove the container, its not going to wipe out the host location
+    d) Suppose you have shared some location from host to some path in container and ran the container, Then becuase of this bind mounting, the
+        host data will appear inside the container. but if we stop and run that container again without the bin mount, then the container data
+        at that path will be visible again. So Bind mounts does not override anything inside container.
+    e) Since the Bind mounts are host specific, they need specific dat to be on the hard drive of the host in order to work. So we cannot
+        specify in the Dockerfile and we have to use them at run time while using the docker container run command
+    f) syntax of mentioning the Bind mounts in the docker run command :
+        .... run -v /User/bret/stuff:/path/container (mac/linux)
+        .... run -v //User/bret/stuff:/path/container (windows)
+        docker differences between the volumes and bind mounts with the help of forward slash (/) because in case of Bind mounts the name on
+        left side of colen starts with /
+2) So to understand the use of Bind mounts lets have a look at dockerfile-sample-2/Dockerfile and dockerfile-sample-2/index.html 
+    file. if we open and notice the Dockerfile referenced inside dockerfile-sample-2/ we notice that we are basically extending the functionality
+    of the official nginx image by moving to the root of nginx webhost and then copying the index.html file from our local system to container.
+3) So instead of copying this file everytime we modify this file on our local host, we could actually create a bind mount for this file from
+    our local host to the container under the working root directory of nginx. Notice that we could do this while using the container run
+    command only.
+    So lets try to run the container with the help of official image of nginx but this time we need not to extend that and add the COPY command
+    in docker file, we will simply use the bind mount of the directory which contain this index.html file on our local host to the container.
+
+    # docker container run --detach --name nginx -p 80:80 -v //c/Users/Sagar/projects/Docker_kube_project/dockerfile-sample-2:/usr/share/nginx/html nginx
+
+    Now since we have started a new container with bind mount, the data inside this new nginx container at /usr/share/nginx/html will be replcaed
+    data on the local host under //c/Users/Sagar/projects/Docker_kube_project/dockerfile-sample-2.
+    To check this :
+        a) login to container and check under /usr/share/nginx/html
+            # docker exec -it nginx bash
+            # cd /usr/share/nginx/html
+            # ls 
+                Dockerfile  index.html
+        b) Also we could use the browser to load this index.html page
+            http://docker.engine:80
+            and it will give the line we have written inside our index.html file
+            ===================================================================================================
+            You just successfully ran a container with a custom file copied into the image at build time!
+            ===================================================================================================
+4) Now once we have successfully created the bind mount, lets try to modify the index.html file on our local host and it should be automatically 
+    updated inside the container using the bind mount and hence our web page should also have new data.
+    updated index.html file
+        <body>
+            <h1>You just successfully ran a container with a bind mount created at the container run time!</h1>
+        </body>
+    So we have updated the body a little bit
+5) Now since we have updated the file here on our localhost machine, due the bind mount created at the run time of container, the container should
+    also have this updated file.
+6) Also now if we try to check the web page on browse again, it should give us the updated message now
+    =========================================================================================
+    You just successfully ran a container with a bind mount created at the container run time!
+    ==========================================================================================
+7) Similarly if we create any new file on our localhost under the directory //c/Users/Sagar/projects/Docker_kube_project/dockerfile-sample-2,
+     that will be created inside the container as well
+     let say we have created a text file under /c/Users/Sagar/projects/Docker_kube_project/dockerfile-sample-2/testme.txt
+     and save it with some text, then it will be updated insdie the container as well, and now we could see it in browser as well:
+8) similary if we delete any file on container, it will get deleted from the local host as well.

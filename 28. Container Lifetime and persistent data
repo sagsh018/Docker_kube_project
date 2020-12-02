@@ -1,0 +1,19 @@
+1) This is a new section regarding the container lifetime and persistent data. We will cover below topics in this section
+    a) Defining the problem of persistent data, and how that happens in first place.
+    b) Key concepts in containers : immutable, ephemeral.
+    c) Learning and using Data Volumnes
+    d) Learning and using Blind mounts
+    e) Assignments
+2) So lets start :::
+    
+Container lifetime & Persistent Data
+=====================================
+1) Containers are usually immutable and ephemeral in nature by default
+2) "immutable infrastructure" means : only re-deply containers whenever there is any requirement of change is there, do not change the running one
+3) This is a ideal scenario, but what about the databases and the unique data that should persist even though we redeploy the container. ex:
+    data about the client.
+4) Docker gives us feature to ensure these "Separation of concerns" and this is know as "persistent data"
+5) There are two ways to solve this concern in Docker and those are : Volumes and Bind mounts
+6) Volumes :: Make special location outside of container UFS(Union File system)
+7) Bind mounts :: Link container path to host path. that is taking some file system on host machine and mounting it inside the container.
+

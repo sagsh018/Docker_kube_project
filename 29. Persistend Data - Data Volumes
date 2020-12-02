@@ -1,0 +1,195 @@
+1) So here we are going to understand the first way to have "persistent data" and that will be Data Volumes.
+2) So data Volumes are special, and they can't be deleted just be removing the container. They need the manual 
+    deletion and thats make Data Volumes persistent and reliable.
+3) So if we go to the mqsql official image from the Docker hub. Since mqsql is a database and it requires to store the data, hence there are 
+    good chances we have data volumes setup for that image.
+4) Also notice that first and best place we are going to look at the volumes defined is the Dockerfile.
+5) So lets go and check out the Dockerfile of latest mysql image on Docker hub.
+    =====================
+    VOLUME /var/lib/mysql
+    ======================
+    So as we can see above VOLUME command is used inside the Dockerfile for mysql official image and when we start a new container from this 
+    image, a new volume location is created inside the container and is assigned to this above mentioned directory inside the container.
+    Which means any file that we will put in there inside the container, will outlive the container, untill we manually delete the volume.
+6) So lets go t our command line and first try to check what all commands we have with the volumes in Docker
+    # docker volume --help
+        => create, inspect, ls, prune, rm 
+7) We could also take a look at the same volume related information for that image on our local host by inspecting that image.
+    lets pull the mysql image from docker hub and inspect it:
+    # docker image pull mysql
+    # docker image ls
+        REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+        mysql               latest              dd7265748b5d        11 days ago         545MB
+8) Now lets inspect the image pulled
+    # docker image inspect mysql
+        and in this JSON data we could see the volume information as below
+        ========================
+        "Volumes": {
+            "/var/lib/mysql": {}
+        },
+        ========================
+9) Now lets run a container with this mysql image
+    # docker container run --detach --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=true mysql
+    # docker container ls   
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                 NAMES
+        1f793954c6f7        mysql               "docker-entrypoint.s"   6 minutes ago       Up 9 seconds        3306/tcp, 33060/tcp   mysql
+10) Now if we try to inspect this running mysql container we could get the below volume related information :
+    # docker container inspect mysql
+        ============================
+        "Volumes": {
+            "/var/lib/mysql": {}
+        },
+        ============================
+        So we could see that same volume related information is present in the container inspect command
+
+        Also if we check further this inspect command output on container we could also find the detail about volumes in mounts part od this    
+        inspect output : 
+        =======================================================================================================================
+        "Mounts": [
+        {
+            "Type": "volume",
+            "Name": "51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb",
+            "Source": "/mnt/sda1/var/lib/docker/volumes/51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb/_data",
+            "Destination": "/var/lib/mysql",
+            "Driver": "local",
+            "Mode": "",
+            "RW": true,
+            "Propagation": ""
+        }
+        ]
+        ========================================================================================================================
+        So if we notice this we can see that Source in the above output tells us the location of volume data stored on the host machine
+        and in our case its a VM running on VBox (default) and it is mapped inside the container on Destination :: /var/lib/mysql
+11) So if we try to login to our default VM
+    # docker-machine ssh default
+    # cd /mnt/sda1/var/lib/docker/volumes/51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb/_data
+    # ls
+        #ib_16384_0.dblwr   ca-key.pem          ibdata1             server-cert.pem
+        #ib_16384_1.dblwr   ca.pem              ibtmp1              server-key.pem
+        #innodb_temp        client-cert.pem     mysql               sys
+        auto.cnf            client-key.pem      mysql.ibd           undo_001
+        binlog.000001       ib_buffer_pool      performance_schema  undo_002
+        binlog.000002       ib_logfile0         private_key.pem
+        binlog.index        ib_logfile1         public_key.pem
+12) Now lets also check the volume created with the help of docker volume command
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+    we could also inspect this volume :
+    # docker volume inspect 51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+        [
+            {
+                "CreatedAt": "2020-12-02T09:46:31Z",
+                "Driver": "local",
+                "Labels": null,
+                "Mountpoint": "/mnt/sda1/var/lib/docker/volumes/51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb/_data",
+                "Name": "51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb",
+                "Options": null,
+                "Scope": "local"
+            }
+        ]
+    So we see similar type of information in this volume inspect command as well, but this output dows not show us the details related to 
+    where this volume from host (mount point) is linked to, on contiainer.
+13) So whatever we have seen till now regarding the docker volume has one disadvantage and that is from the contaiener perspective we cannot see
+    what volume is is actually connected to with the help of SHA value and same is the case from volume perspective, we don;t know where
+    and which volume it is connected to. So we will try to overcome this problem 
+14) but for now lets spin up another container using the same mysql image and name it ias mysql2
+    # docker container run --detach --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=true mysql
+15) docker container ls
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                 NAMES
+    2659d46b195c        mysql               "docker-entrypoint.s"   7 minutes ago       Up 4 seconds        3306/tcp, 33060/tcp   mysql2
+    1f793954c6f7        mysql               "docker-entrypoint.s"   47 minutes ago      Up 39 minutes       3306/tcp, 33060/tcp   mysql
+16) Docker volume ls
+    DRIVER              VOLUME NAME
+    local               5c6a3ddfb282c0555c0f882e51e522484e98beeb9cf5f2a9a9130322c39f60f0
+    local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+    So now we see we have two volumes with big SHA values, but we are not sure with this output which volume is connected to which container.
+17) Now lets try to stop the container and than remove them and we will see if this volumes persist or not
+    # docker container stop mysql mysql2
+    now check the volumes again
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               5c6a3ddfb282c0555c0f882e51e522484e98beeb9cf5f2a9a9130322c39f60f0
+        local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+18) Now lets remove the container as well
+    # docker container rm mysql mysql2
+    again check the volumes
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               5c6a3ddfb282c0555c0f882e51e522484e98beeb9cf5f2a9a9130322c39f60f0
+        local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+    So even after removing the container completely we still have our volumes present and data is persisted
+19) So we have solved one of the problem and databases outlive the container/binaries. but now we have another problem in place, to make
+    docker volumes more user friendly. 
+    This could be done by making use of the "Named Volumes" 
+20) Named Volumes :: They are the frindly way to assign volumes to container and also provide us the ability for us to specify things on
+    docker run command.
+21) So we could actually do two things while running the container :
+    a) docker container run --detach --name <container name> -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v /var/lib/mysql mysql
+        So this is going to the same task which we have accomplished above by adding the VOLUME command inside the Dockerfile fir mysql image.
+    b) docker container run --detach --name <container name> -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v mysql_db:/var/libmysql mysql mysql
+        So this time we have mentioned the name of the container as well along with the volume in the docker run command and this is going to
+        help us in creating the named containers,
+22) Now lets run two new containers with the named volumes:
+    # docker container run --detach --name mysql1 -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v mysql_db1:/var/lib/mysql mysql
+    # docker container ls   
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                 NAMES
+        deba54c41fc0        mysql               "docker-entrypoint.s"   8 minutes ago       Up 4 seconds        3306/tcp, 33060/tcp   mysql1
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               5c6a3ddfb282c0555c0f882e51e522484e98beeb9cf5f2a9a9130322c39f60f0
+        local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+        local               mysql_db1
+    So now we see a new volume  and this time it has a name and with this we could alos tell that this is related to mysql1 container.
+    # docker volume inspect mysql_db1
+        [
+            
+                "CreatedAt": "2020-12-02T10:42:06Z",
+                "Driver": "local",
+                "Labels": null,
+                "Mountpoint": "/mnt/sda1/var/lib/docker/volumes/mysql_db1/_data",
+                "Name": "mysql_db1",
+                "Options": null,
+                Scope": "local"
+            }
+        ]
+    So this time the name of the volume makes more sense here.
+23) Lets also inspect the container and see how the information related to this new named volume is mentioned in it.
+    # docker container inspect mysql1
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "mysql_db1",
+                "Source": "/mnt/sda1/var/lib/docker/volumes/mysql_db1/_data",
+                "Destination": "/var/lib/mysql",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        So here also the source information is bit more user friendly and we can understand it now.
+24) So like this we could give the volumes, user friendly names, for example i can give the project name to the volume and that way it will
+    be easy for me.
+25) Now lets remove the running container mysql1 
+    # docker container rm -f mysql1
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               5c6a3ddfb282c0555c0f882e51e522484e98beeb9cf5f2a9a9130322c39f60f0
+        local               51434fe223d85c3d527fcb70cab2d6510a6330568fc3021b20261629a92b16bb
+        local               mysql_db1
+        So volumes still exist.
+    # docker container run --detach --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v mysql_db1:/var/lib/mysql mysql
+    So with this we have spun up another container, but if we check in the docker volume command, we notice that smae volume mysql_db1 is used
+    for this container as well.
+26) Now one last thing about the docker volumes is that we could also create them ahead of docker run command, without mentioning them in the
+    Dockerfile, by using docker volume create command
+    # docker volume create --help
+          -d, --driver string   Specify volume driver name (default "local")
+            --label list      Set metadata for a volume
+          -o, --opt map         Set driver specific options (default map[])
+    So this create command used in some cases when we want to specify the drivers(default is local) and also to set the options(default is map[])
+
+
+
+

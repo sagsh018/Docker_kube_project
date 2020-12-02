@@ -1,0 +1,22 @@
+1) We are going to do a realtime scenario, where we will have to upgrade the database with containers.
+2) Create a postgres container with named volume psql-data using version 9.5. check out the versions on docker hub.
+3) use docker hub to learn the VOLUME path and versions needed to run it 
+4) check logs and than stop container
+5) Create new postgres contianer with same named volume using version 9.6.
+6) check logs to validate again and this time very less data will be updated in logs.
+
+Solution
+=========
+# pwd
+    /c/Users/Sagar/projects/Docker_kube_project
+# docker container ls 
+# docker image ls
+# docker volume ls 
+# docker container run --detach --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=brDSLsd -v psql-data:/var/lib/postgresql/data postgres:9.6.1
+# docker container ls
+# docker container logs -f postgres
+    This will show log of log data in right now.
+# docker volume ls 
+# docker container stop postgres
+# docker container rm postgres
+# docker container run --detach --name postgres2 -p 5432:5432 -e POSTGRES_PASSWORD=brDSLsd -v psql-data:/var/lib/postgresql/data postgres:9.6.2
