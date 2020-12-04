@@ -1,0 +1,38 @@
+1) So Docker compose is a combination of a command line tool and a configuration file.
+2) So why do we actually need Docker compose:
+    a) It configures the relationship between containers
+    b) save our docker container run settings in easy-to-read file called Docker-compose.yml file 
+    c) put different containers into descrete networks and then establish relationship between them and only expose the public port.
+    d) Spin up all the containers and turn them all down with just a single command and this docker-compose.yml file.
+    e) and hence create one-liner developer environment start up.
+3) There are two parts of docker compose:
+    a) YAML-formatted file that describes out solution options for :
+        - containers
+        - networks
+        - volumes
+        - Environment variables
+        - images
+        - All sorts of other configuration options
+    b) A CLI tool which is docker-compose used for local dev/test automation using that YAML file 
+4) So now lets talk about our docker-compose.yml file
+    a) So docker-compose.yml file has its own versions like : 1, 2, 2.1, 3, 3.1, ... These version are based on what all we can add in our 
+        docker-compose.tml file.
+    b) This YAML file can be used with CLI tool docker-compose command for local docker automation.
+    c) This YAML file can also be used directly with docker in production with swarm (as of v1.13)
+    d) We have all the help availabel with our docker-compose --help 
+    e) docker-compose.yml is a default file name but we can use other names as well with the docker-compose -f option.
+5) Now lets look at the example of template for docker-compose.yml and some of the sample docker-compose.yml files under below directory
+    compose-sample-1/
+        -rw-r--r-- 1 Sagar 197121  540 Jun 27 23:58 compose-2.yml
+        -rw-r--r-- 1 Sagar 197121 1158 Jun 27 23:58 compose-3.yml
+        -rw-r--r-- 1 Sagar 197121  205 Jun 27 23:58 docker-compose.yml
+        -rw-r--r-- 1 Sagar 197121  541 Jun 27 23:58 template.yml
+6) template.yml file tels about about the basic part of the docker-compose.yml file and what all we could incode inside this file.
+7) Then lets have a look at the compose-sample-1/docker-compose.yml file which is made for the below docker run command
+    ================================================================================
+    docker container run -p 80:4000 --detach -v $(pwd):/site bretfisher/jekyll-serve
+    =================================================================================
+    If we check out the docker-compose.yml file for this one We can see how we have mentioned the container name as service in this yaml file
+    also how we have mentioned our image, how we have mentioned the volume, and finally how we have mentioned the ports.
+8) similary there are two more compose file example where there are more than one container/services are spun using those docker-compose.yml files
+    go and refer them thye are just for understanding.
