@@ -1,0 +1,35 @@
+Assignment
+===========
+This empty directory is where you should create a docker-compose.yml
+Use the drupal:8.8.2 image along with the postgres:12.1 image
+Set the version to 2
+Use ports to expose Drupal on 8080
+Be sure to setup POSTGRES_PASSWORD on postgres image
+Walk though Drupal config in browser at http://localhost:8080
+Tip: Drupal assumes DB is localhost, but it will actually be on the compose service name you give it
+Use Docker Hub documentation to figure out the right environment and volume settings
+Extra Credit: Use volumes to store Drupal unique data
+
+Solution
+=========
+# cd compose-assignment-1/answer/
+# vi docker-compose.yml
+    have a loot how we have created
+
+# docker-compose up -d 
+# docker container ls 
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+    c31534b0e571        postgres:12.1       "docker-entrypoint.s"   15 minutes ago      Up 11 minutes       5432/tcp               answer_postgres_1
+    44c8944ea49f        drupal:8.8.2        "docker-php-entrypoi"   15 minutes ago      Up 11 minutes       0.0.0.0:8080->80/tcp   answer_drupal_1
+# then in browser => http://docker.engine:8080/
+# Then do the setup in browser for drupal
+    give DB name : postgres
+    user name : postgres
+    password : as per mentioned in docker-compose.yml file
+    under advance : set host to : postgres again which is nothing but telling drupal to contact db on same virtual network of that its own
+    container.
+# finlly to perform the clean up
+    # docker-compose down -v
+        notice that we are mentioning the option as -v because we want to clean up the volumes as well, which docker always try to protect
+        by default.
+

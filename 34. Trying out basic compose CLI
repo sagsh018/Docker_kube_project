@@ -1,0 +1,140 @@
+1) So in this lecture we are going to be studying about the docker-compose CLI
+2) docker-compose CLI comes with Docker for windows/Mac packed with the docker software, but comes as a separate download in case of linux
+3) This is not a production-grade tool but ideal for local development and test
+4) Two most common commands that we are going to use for docker-compose are :   
+    a) docker-compose up :: This is going to setup networks/volumes and start all the container configured in docker-compose.yml file.
+    b) docker-compose down :: stop all the containers and remove all containers/volumes/networks configured in docker-compose.yml file.
+5) if suppose you project had a Dockerfile and docker-compose.yml file for the new developer joing the team. they couldbe onboarded by:
+    a) git clone github.com/some/software(this git repo will hold your Dockerfile and docker-compose file)
+    b) docker-compose up
+6) Now lets try to do an example:
+    for this lets go inside below folder:
+    compose-sample-2/
+7) Inside this we have one docker-compose.yml file 
+    compose-sample-2/docker-compose.yml
+    ======================================================================================
+    version: '3'
+
+    services:
+      proxy:
+        image: nginx:1.13 # This is going to use latest version of nginx, i.e. 1.13.x
+        ports:
+          - '80:80' # exposing 80 on host and sending traffic to container on 80 as well
+        volumes:
+          - ./nginx.conf:/etc/nginx/conf/default.conf:ro
+  
+      web:
+        image: httpd # this will use httpd:latest by default.
+    ======================================================================================
+    So if we notice this docker-compose.yml file we will notice that we have two services/containers, that will spin up
+    First one will be nginx container, which will act as reverse proxy server and it will stand in fonnt of out httpd web server
+    Second one is the httpd web server and this will be behind the reverse proxy nginx container 
+
+    and then we are exposing the port 80 on our host machine which is going to tranfer the exrnal traffic to nginx reverse proxy container on 
+    port 80 as well
+
+    Then finally we are also creating a bind mount where we are changing the default.conf file inside the nginx container and telling it to 
+    act as a reverse proxy instead of web server in this case and stand in front of another web server named with container name : web
+    and also we are making this file as read only inside the container, so that no one would be able to modify it inside the container.
+8) Now since we have our docker-compose.yml file ready, let's try to run docker-compose up --detach(to run the containers in background)
+    # cd /c/Users/Sagar/projects/Docker_kube_project/compose-sample-2
+    # docker-compose up -d 
+        Output
+        ================================================================================
+        Creating network "compose-sample-2_default" with the default driver
+        Pulling proxy (nginx:1.13)...
+        1.13: Pulling from library/nginx
+        f2aa67a397c4: Pull complete
+        3c091c23e29d: Pull complete
+        4a99993b8636: Pull complete
+        Digest: sha256:b1d09e9718890e6ebbbd2bc319ef1611559e30ce1b6f56b2e3b479d9da51dc35
+        Status: Downloaded newer image for nginx:1.13
+        Pulling web (httpd:)...
+        latest: Pulling from library/httpd
+        852e50cd189d: Already exists
+        67d51c33d390: Pull complete
+        b0ad2a3b9567: Pull complete
+        136f1f71f30c: Pull complete
+        01f8ace29294: Pull complete
+        Digest: sha256:fddc534b7f6bb6197855be559244adb11907d569aae1283db8e6ce8bb8f6f456
+        Status: Downloaded newer image for httpd:latest
+        Creating compose-sample-2_proxy_1 ... done
+        Creating compose-sample-2_web_1   ... done
+        ================================================================================
+        Note:
+        a) docker compose has created a default network with default driver "compose-sample-2_default"
+        b) pulled the official images for nginx and httpd from docker hub.
+        c) created two containers compose-sample-2_proxy_1 & compose-sample-2_web_1 and also created the bind mount for proxy container and 
+            brought up the containers.
+        d) Notice in above docker-compose.yml file we have mot mentioned any section about the networks and volumes. the reason is that we don't
+            want to make any modification in the default network that docker-compose will create for us, like changing the name of network, change
+            the ip address, change the default driver, etc.
+            similarly we have not mentioned the volumes section, because we don't want to create specific volumes like named volumes.
+9) Now if we try to check what happened with this docker-compose up -d command:
+    a) # docker container ls 
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                NAMES
+        7ffb06927e9a        httpd               "httpd-foreground"       10 seconds ago      Up 8 seconds        80/tcp               compose-sample-2_web_1
+        99fc85ba0225        nginx:1.13          "nginx -g 'daemon of"   10 seconds ago      Up 8 seconds        0.0.0.0:80->80/tcp   compose-sample-2_proxy_1
+
+        # docker image ls 
+        REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+        nginx                     latest              bc9a0695f571        9 days ago          133MB
+        httpd                     latest              0a30f4c29d25        2 weeks ago         138MB
+
+        # docker network ls
+        NETWORK ID          NAME                       DRIVER              SCOPE
+        7b17923f05ef        compose-sample-2_default   bridge              local
+
+        We haven't created any named volume so no need to check that
+        Also we could login to the container "compose-sample-2_proxy_1" and check whether the default.conf file got updated with nginx.conf file.
+        # docker exec -it compose-sample-2_proxy_1 bash
+        # cd /etc/nginx/conf/
+        # cat default.conf
+            and you will notice that default.conf will be updated with the content of file nginx.conf on our local host with the help
+            of bind mount we have created.
+            and if we stop and start this container again without bind mount the file will be back to normal default.conf file.
+10) we could also check the logs of docker-compose in much similar way like we did for docker 
+    # docker-compose logs -f(for forever)
+11) Now lets try to hit what we have created with our browser
+    http://docker.engine:80
+    and this will show us the web page from httpd server  and not from the nginx server as nginx is acting as a reverse proxy server here
+    so our brower is going to hit proxy server which will forward the request to web server, web server will return the default web page to
+    proxy server and proxy server will respond back to our browser.
+    Now if we check the logs again
+    # docker-compose logs -f 
+    web_1    | 172.21.0.2 - - [04/Dec/2020:16:32:53 +0000] "GET / HTTP/1.0" 200 45
+    proxy_1  | 192.168.99.1 - - [04/Dec/2020:16:32:53 +0000] "GET / HTTP/1.1" 200 45 "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" "-"    
+12) This docker-compose CLI is basically connecting to the docker CLI in the background and becuase of that most of the docker CLI commands are
+    same here for docker-compose CLI as well
+13) few commands
+    # docker-compose ps 
+                  Name                   Command          State         Ports
+            ----------------------------------------------------------------------------
+            compose-sample-2_proxy_1   nginx -g daemon off;   Up      0.0.0.0:80->80/tcp
+            compose-sample-2_web_1     httpd-foreground       Up      80/tcp
+    # docker-compose top
+        compose-sample-2_proxy_1
+        The system cannot find the path specified.
+        UID    PID    PPID   C   STIME   TTY     TIME                        CMD
+        --------------------------------------------------------------------------------------------
+        root   3923   3890   0   16:32   ?     00:00:00   nginx: master process nginx -g daemon off;
+        101    4014   3923   0   16:32   ?     00:00:00   nginx: worker process
+
+        compose-sample-2_web_1
+        The system cannot find the path specified.
+        UID    PID    PPID   C   STIME   TTY     TIME            CMD
+        --------------------------------------------------------------------
+        root   3910   3865   0   16:32   ?     00:00:00   httpd -DFOREGROUND
+        1      4015   3910   0   16:32   ?     00:00:00   httpd -DFOREGROUND
+        1      4016   3910   0   16:32   ?     00:00:00   httpd -DFOREGROUND
+        1      4017   3910   0   16:32   ?     00:00:00   httpd -DFOREGROUND
+    # docker-compose --help : to list all commmands available
+14) Now finally lets clean up what we have created
+    # docker-compose down
+        Stopping compose-sample-2_web_1   ... done
+        Stopping compose-sample-2_proxy_1 ... done
+        Removing compose-sample-2_web_1   ... done
+        Removing compose-sample-2_proxy_1 ... done
+        Removing network compose-sample-2_default
+
+compose file version 3 referance : https://docs.docker.com/compose/compose-file/

@@ -1,0 +1,101 @@
+1) So in this lecture we are going to extend the functionality of our docker-compose file and we are going to add image building to the 
+    compose file.
+2) So compose can build our custom images during the run time 
+3) So compose have a look for am image in cache first, and if it does not find your sudtom image, then if you have mentioned build option in
+    compose file, it is going to build your custom image.
+4) Now suppose you have made some changes to you Dockerfile and again you want to rebuild you custom image and run container off of updated 
+    Dockerfile. in this case, since docker-compose up will again check the cache and find the old image in cache, so it is not going to 
+    rebuild the image, so for this you will have to use one out of two questions:
+        a) wither rebuild using docker-compose first with below command
+            # docker-compose build
+        b) pass in the build arguement in docker-compose up command itself.
+            # docker-compose up --build
+5) This building the image with the help of compose is a great choice for complex builds that have lots of variables and build arguement(These 
+    are special variables that are available only during the build time)
+6) Now lets try to do the sample build, switch to folder :
+    # cd compose-sample-3/
+7) So here :
+    a) firstly let's have a look at the nginx.Dockerfile, thid Dockerfile is extending the nginx official image and we are adding one more
+        command of COPY, where we are copying the nginx.conf file to the default.conf gile inside the container at the build time.
+        So notice that we have created a custom image by extending the official nginx image.
+    b) Now suppose we haven't build it using "docker image build <image name>" command and we want this image building also to be automated 
+        with docker-compose. So for this check out the compose file : docker-compose.yml
+        That shows a special section in services and that is build section, and inside build we have mentioned the where is the context to
+        build the image and then we have mentioned the name of the Dockerfile below that.
+    c) Also notice that in this image, we have web server as httpd and nginx is acting as a reverse proxy server again, and we made that sure
+        by copying the updated nginx.conf file to container at the time of build by mentioning it inside the nginx.Dockerfile.
+    d) Now notice the inside the docker-compose.yml file again and see the web serivce section where we have mentioned the bind mount for the
+        entire html directory to the htdocs inside the container. So that whatever modification developer does outside in his local machine,
+        will automatically be updated inside the container as well.
+    e) Also notice that i have mentioned the image name : custom-nginx, so that compose after building the image, will assign this name to
+        my image, otherwise if we don't provide the name of an image inside the compose file, it set the defualt name of an image.
+8) So now since we have our compose file ready and we have our nginx.conf file and nginx.Dockerfile available in same directory
+    # pwd => /c/Users/Sagar/projects/Docker_kube_project/compose-sample-3
+    Let's go ahead and run docker-compose up
+    few things to note:
+        a) as soon as we will run the docker-compose up, compose will go and check out the compose file and from there it will find the image 
+            name as custom-nginx, then it will go and search for this image in cache, but since this is first time we are building this image,
+            compose look for build step inside the compose file and build the image accordingly.
+        b) Then it will carry on other tasks like setting up ports for proxy and creating bind mounts for web server and then bringing up both
+            the containers
+    # docker-compose up -d 
+        ================================================================================================================
+        Creating network "compose-sample-3_default" with the default driver
+        Building proxy
+        Step 1/2 : FROM nginx:1.13
+            ---> ae513a47849c
+        Step 2/2 : COPY nginx.conf /etc/nginx/conf.d/default.conf
+            ---> f7861097887f
+        Successfully built f7861097887f
+        Successfully tagged custom-nginx:latest
+        WARNING: Image for service proxy was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+        Creating compose-sample-3_web_1   ... done
+        Creating compose-sample-3_proxy_1 ... done
+        ====================================================================================================================
+        So what happened:
+        a) firstly compsose have created a default netowrk with default netowrk driver
+        b) second compose tried to build the image, as it didn't find the image in cache, and tagged it as custom-nginx:latest. note that,
+            if we would have not provided the name of image in compose file, compose would have given the default name to image, just like
+            it gave to network and containers.
+        c) Third, docker gave a warning: Image for service proxy was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+            So its pretty clear
+        d) finally, it brought the container up
+9) Let's check few things
+    # docker container ls 
+    # docker image ls 
+        REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+        custom-nginx              latest              f7861097887f        8 minutes ago       109MB
+    # docker-compose logs -f
+10 Now lets try to hit our webside from browser via proxy server
+    http://docker.engine:80
+11) Now lets perform the clean up as well
+    # docker-compose down
+    Notice by default docker-compose down command does not clean up the images which are created during this project.
+12) So clean up all the images that are used during this project, what we could do is :
+    # docker-compose down --rmi all
+13) Now lets try out one moe thing
+    let update our docker-compose file and remove the image name from it, so that compose will give the image a default name to it.
+    ===========================================
+      proxy:
+        build:
+            context: .
+            dockerfile: nginx.Dockerfile
+        ports:
+            - '80:80'
+    ============================================
+    So notice we have removed the image names for custom nginx. Also notice that we cannot remove image name for httpd because we are not 
+    building it.
+14) Now lets run docker-compose up again
+    # docker-compose up -d 
+        So this time since we have not given the name to the image for nginx in our compose file, compose has given a default name to the
+        image as: compose-sample-3_proxy:latest
+        # docker image ls
+            REPOSITORY                TAG                 IMAGE ID            CREATED              SIZE
+            compose-sample-3_proxy    latest              b7cc742806c2        About a minute ago   109MB
+15) Now in such case where the image name is given by the compose itself, we could remove them at the docker-compose down using below :
+    # docker-compose down --rmi local
+        notice this local: emove only images that don't have a custom tag set by the `image` field.
+16) So once again lets bring down our app:
+    # docker-compose down --rmi local
+        but notice this is not going to remove the httpd image as, image name is given by us in compose file.
+        
