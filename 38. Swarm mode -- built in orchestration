@@ -1,0 +1,50 @@
+1) Here in this section we are going to unbox one of the major evelution for docker and that is Docker Swarm
+2) So what is the reason behind having docker swarm, which is built-in orchestration for docker
+3) below are the reasons for it:
+    a) How can we automate container lifecycle
+    b) how can we easily scale out/in/up/down
+    c) How can be sure our containers are re-created if they fail
+    d) How can we replace the containers without downtime(blue/green deply)
+    e) How can we control and track where the containers get started
+    f) How can we create cross node virtual networks
+    g) How can we ensure only trusted servers run our containers
+    h) How can we store secrets, keys, passwords, and get them to the right container(and only that container)
+4) So to solve all the above problems, we reach out to solution:
+   
+    Swarm Mode : Built-in orchestration
+    ====================================
+1) Swarm mode is a clustering solution built inside docker that brings together different operating systems/hosts/nodes into a single manageable
+    unit, that you can then orchestrate the lifecycle of your containers in 
+2) Just to make it clear in this section we are not going to talk about the swarm which is also called as Swarm "classic", which was a add to
+    docker before 1.12 versions of docker came out. This was just a container that would run inside docker, that takes our docker run command in
+    repeated amount on multiple server. So this does solve some problems but still could not resolve 80% of the cases.
+3) But in dockerconn in summer of 2016 docker added swarmkit toolkit in version 1.12 in summer of 2016. This swarmkit  toolkit is a set of 
+    libraries or a toolkit related around a whole bunch of new swarm features, and then they stuck that right into the docker server.
+4) Then in January 2017 docker enhanced its swarmkit and enhanced its functionality by adding new features like: Stacks and Secrets.
+5) Note that by default docker is not enabled on any of the system having docker installed. You need to enable it before running and without    
+    enabling non of the below commands of swarm will work
+    - docker swarm
+    - docker node
+    - docker service
+    - docker stack
+    - docker secret 
+6) So this wonderful design of docker by making swarm part of docker server but not enabled by default, makes its really easy, for people who 
+    do not want to make use of docker swarm or they want to make use of other orchestration tool on top of docker, like kubernetes.
+
+Some Basic Concepts
+===================
+1) Please consider the basic diagram for swarm manager and workers design in file "Diag1-basic_manager_worker_design.png" in same working directory
+    Explaination of diagram:
+    a) The blue boxes at the top are called as manager nodes, and they have database locally on them, known as a raft database.
+    b) This raft database stores the configuration and gives all the required information to manager nodes, which they need have to be the 
+        authority inside a swarm.
+    c) So in our Daig1 we have three different managers that are added to swarm and they all keep a cpy of that database and encrypt the traffic
+        in order to ensure integrety and gurantee the trust that they are able to manage the swarm securely.
+    d) Below the manager nodes in diag1 we have our worker nodes. So now we can see that in the concept of swarm we have managers and workers
+    e) Each one of these manager and worker nodes will be a virtual machines or physical machine running some distrubution of linux or windows
+        server 
+    f) Also this diag1 shows us how they communicate each other over control planes, which is how oredrs are sent around the swarm for taking 
+        actions
+2) Now consider another diag2 which is more complicater version of above diag1 : Diag2-complicated_manager_worker_design.png
+    Explaination of diagram:
+    a) 
