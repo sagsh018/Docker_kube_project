@@ -1,0 +1,72 @@
+1) So lets create a single node swarm first for our own testing purpose
+2) So check whether swarm is active or not in our docker installation, we can check it using :
+    # docker info | grep -i swarm
+        Swarm: inactive
+    So we can see that by default docker does not enable any of the swarm feature.
+3) So we can first enable it using below command
+    # docker swarm init --advertise-addr 192.168.99.100
+        ======================================================================================================================================
+        Swarm initialized: current node (ta4kbmd3a9u0qn3m7d22e0lf4) is now a manager.
+
+        To add a worker to this swarm, run the following command:
+
+            docker swarm join --token SWMTKN-1-4darh14kbwdnx5pfgbqgarvjievug3k7hi9lm2nbk6w5hbtl8d-85cbcxuj1nwmbsq22ill6kd85 192.168.99.100:2377
+
+        To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+        =======================================================================================================================================
+        So this has created our single node swarm, with all the featuer and functionalities that we get along with Swarm
+4)  So what just happened after running the above command:
+    a) Lots of PKI(Public key infrastructure) and security automation takes place in the background.
+        i) Root signing certificate is created for our swarm that it will use to establish trust and assign certificate to all nodes and all 
+            managers
+        ii) It creates a special certificate and is issued to the first manager node, because its a manager.
+        iii) It also create tokens that we can actually use on other nodes to join this swarm.
+    b) Enable the swarm API and create something called as Raft Database(raft is a protocole that actually ensure consistency across multiple 
+        nodes) to store root CA, configs of swarm and of that first manager and secrets
+        i) Then it encrypts by default, all this above mentioned information on disk (assuming you have version 1.13+) and then it will wait 
+            for any other nodes before it start actually replicating the database over to them and all of this traffic that it would be doing 
+            once we create another node, is all going to be encrypted as well.
+        ii) Note that there will be no need of another key/value system to hold orchestration/secrets.
+        iii) Replicate logs amongst managers via mutual TLS in control plan.
+5) So we could notice from the above docker swarm create command output that if we want to create workers to this swarm we have created, we 
+    to just go and run below command on any of the server i would like to add in this swarm. but for now we are just keeping it as single
+    node swarm
+6) Now lets have a look at some of the commands that we have with swarm.
+    # docker node ls 
+        ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+        ta4kbmd3a9u0qn3m7d22e0lf4 *   default             Ready               Active              Leader              19.03.12
+    So notice that, it is showing the single manager node that is created while running the "docker swarm create". Notice that the manager
+    status for this node is marked as "Leader" and there can be only one Leader among all the manager nodes at a given time.
+7) Now we could actually have a look at all the options avaialable to us with docker node command:
+    # docker node --help
+        demote      Demote one or more nodes from manager in the swarm
+        inspect     Display detailed information on one or more nodes
+        ls          List nodes in the swarm
+        promote     Promote one or more nodes to manager in the swarm
+        ps          List tasks running on one or more nodes, defaults to current node
+        rm          Remove one or more nodes from the swarm
+        update      Update a node
+8) Now lets get back to the docker swarm command see what all options do we have with that command as well:
+    # docker swarm --help
+        ca          Display and rotate the root CA
+        init        Initialize a swarm
+        join        Join a swarm as a node and/or manager
+        join-token  Manage join tokens
+        leave       Leave the swarm
+        unlock      Unlock swarm
+        unlock-key  Manage the unlock key
+        update      Update the swarm 
+9) Now let's look into the new docker service command. So thing to remember, service command in swarm replaces docker run command.
+    # docker service --help
+        create      Create a new service
+        inspect     Display detailed information on one or more services
+        logs        Fetch the logs of a service or task
+        ls          List services
+        ps          List the tasks of one or more services
+        rm          Remove one or more services
+        rollback    Revert changes to a service's configuration
+        scale       Scale one or multiple replicated services
+        update      Update a service
+    So we can see that difference between the docker run and docker service command is that "run" command is used to bring up a single 
+    container and deal with that, whereas the service command is to deal with the cluster of containers.
+10) Now lets go ahead and create a service 

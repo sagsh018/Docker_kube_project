@@ -45,6 +45,32 @@ Some Basic Concepts
         server 
     f) Also this diag1 shows us how they communicate each other over control planes, which is how oredrs are sent around the swarm for taking 
         actions
-2) Now consider another diag2 which is more complicater version of above diag1 : Diag2-complicated_manager_worker_design.png
+2) Now consider another diag2 which is more complicated version of above diag1 : Diag2-complicated_manager_worker_design.png
     Explaination of diagram:
-    a) 
+    a) So at the top we can see the raft concensus database which is replicated among all the nodes/managers.
+    b) So Managers issue orders down to workers
+    c) Also note that you can promote and demote the nodes into two different roles, that means managers can also be workers and vice verse.
+    d) So if we think about the manager, than we can also view them as workers, with the extra permissions to control swarm
+    e) The main required for all these nodes is that they should be running same docker which we have used till now.
+3) Now consider another diagram which is used to picturized how our containers will look in this swarm configuration: 
+    Diag3-Containers_setup_in_swarm_mode.png
+    a) So in this diagram we will try to understand how our containers will look like in this swarm setup.
+    b) So till now with the help of "docker container run" we were just able to start and stop a single container and this also does not have
+        anything feature to scale up and scale down in number of containers.
+    c) So in case of swarm mode our docker run command gets replaced with the docker service command, amd this allows us to add extra features 
+        our container when we run it such as how many replica's of the same container do we want to run and those are going to be known as tasks
+    d) So a single service(swarm service) can have multiple tasks and each one of those tasks will launch a container 
+    e) So in our diag3, we have created the service using "docker service create" to spin up an nginx service using nginx image like we used 
+        before and several times before, but this time we told it that we want 3 replica's. So it will use the manager nodes to decide,
+        where in the swarm to place those three replica's. by default it tries to spread them out, so each node gets it own copy nginx container
+        upto the 3 replica's that we have mentioned in the docker service command.
+4) Then finally we have a diag4, which tells us exactly what happens when we run docker service create command.
+    Diag4-docker_service_create_background.png
+    a) So in this Daig4 we are trying to understand what all happens and who are involded behind the scene when docker service create command
+        is executed.
+    b) So according to the diagram, we have worker nodes that we continuously reporting to manager nodes and asking for new work.
+    c) than we have manager nodes which include multiple roles like the dispatcher, scheduler, Allocator and Orchestrator and API.
+    d) for example, if you tell docker container serivce to add 3 more replica's then orchestrator will reconciliate and order workers to
+        increase the number of replica's.
+    
+
