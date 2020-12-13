@@ -1,0 +1,6 @@
+Link to download the APMI tar file
+=> https://apmgw.dxi-na1.saas.broadcom.com/apm/appmap/acc/apm/acc/downloadpackage/uid/ere7U-7BYdaJ/version/3?format=archive&packageDownloadSecurityToken=a4b731d1f507fb7d9ab3a3f654118c836f4ad97f3314655a1acee226a41aa94fx523
+
+tar -xvf
+
+./APMIACtrl.sh
