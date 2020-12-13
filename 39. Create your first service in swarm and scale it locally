@@ -69,4 +69,141 @@
         update      Update a service
     So we can see that difference between the docker run and docker service command is that "run" command is used to bring up a single 
     container and deal with that, whereas the service command is to deal with the cluster of containers.
-10) Now lets go ahead and create a service 
+10) Now lets go ahead and create a service inside the swarm manager node we have created using "docker swarm init" above
+    # docker service create alpine ping 8.8.8.8 (here we are just taking a small alpine image and asking it to ping google DNS server) 
+        ====================================================================
+        mvpk1esrsw0fbcdla1hhlhllx
+        overall progress: 1 out of 1 tasks
+        1/1: running   [==================================================>]
+        verify: Service converged
+        ====================================================================
+    So we could see from the above output that, like a docker run/docker container run command this docker service command has also spit out
+    the ID "mvpk1esrsw0fbcdla1hhlhllx"
+    but notice that, in this case, unlike as that of docker run command, this ID is of service and not of the container.
+11) We could see the services running
+    # docker service ls 
+        ID                  NAME                   MODE                REPLICAS            IMAGE               PORTS
+        mvpk1esrsw0f        laughing_ardinghelli   replicated          1/1                 alpine:latest
+    So if we notice from the above output, we could see that:
+    a) the name of the service is given as a random name just as docker give it to container when we docker run command without the name of 
+        container.
+    b) Also notice, somthing called as REPLICAS, which shows number of replicas that are running/that are expected to be run. and its the duty
+        of an orchestrator that these two numbers should match.
+12) So till now we have just listed the service that is availabel in the above command using docker service ls. now let's drill down even 
+    further and check out the tasks/container this service is running:
+    # docker service ps laughing_ardinghelli
+        ===================================================================================
+        ID                  NAME                     IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR
+        ppghezp45hid        laughing_ardinghelli.1   alpine:latest       default             Running             Running 31 minutes ago
+        ===================================================================================
+        So you see its a similar output as that of docker container ls, but in this one we have something called as "node" component, which is 
+        us, on which service is this task running on.
+        Also note the name of the task "laughing_ardinghelli.1" which is just an increment on the name of the service.
+13) Now let's try to see what docker container ls gives us
+    # docker container ls
+        CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+        18bc36d6bcfa        alpine:latest       "ping 8.8.8.8"      35 minutes ago      Up 13 minutes                           laughing_ardinghelli.1.ppghezp45hidr1l8r9sm4xs3i
+    So if you notice the output of above docker container ls command we could see that the name of the container now have some additional
+    information and not just the name of container. to be precise it has now the "<task_name.Task_ID>" which is laughing_ardinghelli.1.ppghezp45hidr1l8r9sm4xs3i
+14) So we invest some more time on the above analogy of the docker container ls and docker service ps
+    but for now, let's go ahead and see how we can scale up our service:
+        # docker service update mvpk1esrsw0f(notice this is service ID) --replicas 3
+    So this is going to scale up my service by two more and total number of services running after this command will be 3
+        =====================================================================
+        mvpk1esrsw0f
+        overall progress: 3 out of 3 tasks
+        1/3: running   [==================================================>]
+        2/3: running   [==================================================>]
+        3/3: running   [==================================================>]
+        verify: Service converged
+        ========================================================================
+    So here we have scaled up the number of replicas we want. which is nothing but number of tasks/container we want.
+15) So if we check out our service again
+    # docker service ls
+        ID                  NAME                   MODE                REPLICAS            IMAGE               PORTS
+        mvpk1esrsw0f        laughing_ardinghelli   replicated          3/3                 alpine:latest
+    Notice the change in the REPLICAS atribute, where now the required are 3 and 3 out of 3 are running and this is done by the orchestrator.
+16) Lets also check the number of tasks running
+    # docker service ps laughing_ardinghelli
+        ID                  NAME                     IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+        ppghezp45hid        laughing_ardinghelli.1   alpine:latest       default             Running             Running 46 minutes ago
+        pc4hv0uaeu7x        laughing_ardinghelli.2   alpine:latest       default             Running             Running 26 minutes ago
+        uw59w8a40b8h        laughing_ardinghelli.3   alpine:latest       default             Running             Running 26 minutes ago
+    So we have scaled up our number of tasks.
+17) Let's also find out what docker container command shows us
+    # docker container ls 
+        CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+        29e91a2cc7e7        alpine:latest       "ping 8.8.8.8"      27 minutes ago      Up 4 minutes                            laughing_ardinghelli.2.pc4hv0uaeu7xh4im19ihp3m5y
+        1f451ba7a2f1        alpine:latest       "ping 8.8.8.8"      27 minutes ago      Up 4 minutes                            laughing_ardinghelli.3.uw59w8a40b8hnzsbfkc5j8sq8
+        18bc36d6bcfa        alpine:latest       "ping 8.8.8.8"      47 minutes ago      Up 24 minutes                           laughing_ardinghelli.1.ppghezp45hidr1l8r9sm4xs3i
+    So thats great, we have cluster of three container running by just a single command.
+18) Now its time to see why docker docker swarm is more production thing. Let's have a look at the command
+    # docker update --help
+        docker update [OPTIONS] CONTAINER [CONTAINER...]
+        Options:
+        --blkio-weight uint16       Block IO (relative weight), between 10
+                                     and 1000, or 0 to disable (default 0)
+        --cpu-period int            Limit CPU CFS (Completely Fair
+                                        Scheduler) period
+        --cpu-quota int             Limit CPU CFS (Completely Fair
+                                        Scheduler) quota
+        --cpu-rt-period int         Limit the CPU real-time period in
+                                        microseconds
+        --cpu-rt-runtime int        Limit the CPU real-time runtime in
+                                        microseconds
+    -c, --cpu-shares int            CPU shares (relative weight)
+        --cpus decimal              Number of CPUs
+        --cpuset-cpus string        CPUs in which to allow execution (0-3, 0,1)
+        --cpuset-mems string        MEMs in which to allow execution (0-3, 0,1)
+        --kernel-memory bytes       Kernel memory limit
+    -m, --memory bytes              Memory limit
+        --memory-reservation bytes  Memory soft limit
+        --memory-swap bytes         Swap limit equal to memory plus swap:
+                                        '-1' to enable unlimited swap
+        --pids-limit int            Tune container pids limit (set -1 for
+                                        unlimited)
+        --restart string            Restart policy to apply when a
+                                        container exits
+    So basically this docker update is a command that is used to update the configuration of one or more running container in the swarm cluster
+    and for that we do not need to kill and restart the container, because swarm is intelligent enough to take care of it itself. and help us 
+    avoiding the downtime.
+19) but if we go and check out the options available for docker service update --help
+    # docker service update --help
+        docker service update [OPTIONS] SERVICE
+    So if we see here for this command we have lots of options availabe, because the goal of the swarm service is that its able to replace 
+    containers and update changes in the service, without taking the entire thing down.
+    So suppose if we have a service with three containers/tasks in it, you could technically taking one at a time and making changes to that
+    and sort of a rolling update, which is a blue green pattern. So that swarm will ensure consistent availability.
+    So the main reason we have lot of option with docker service update command is that because we can change these options and they may 
+    require container restart, but swarm will intelligently make sure that the way we update them is in a pattern that ensure consistent 
+    availability.
+20) Now let's get back to out docker container ls command
+    # docker container ls 
+        CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+        29e91a2cc7e7        alpine:latest       "ping 8.8.8.8"      53 minutes ago      Up 30 minutes                           laughing_ardinghelli.2.pc4hv0uaeu7xh4im19ihp3m5y
+        1f451ba7a2f1        alpine:latest       "ping 8.8.8.8"      53 minutes ago      Up 30 minutes                           laughing_ardinghelli.3.uw59w8a40b8hnzsbfkc5j8sq8
+        18bc36d6bcfa        alpine:latest       "ping 8.8.8.8"      About an hour ago   Up 50 minutes                           laughing_ardinghelli.1.ppghezp45hidr1l8r9sm4xs3i
+    So suppose, i go behind the swarm and delete any one of the above containers by rm command
+    # docker container rm -f laughing_ardinghelli.1.ppghezp45hidr1l8r9sm4xs3i
+        and immediately if i check the docker serice ls command than it will show the Number of replicas that are running is 2/3
+    # docker service ls
+        ID                  NAME                   MODE                REPLICAS            IMAGE               PORTS
+        mvpk1esrsw0f        laughing_ardinghelli   replicated          2/3                 alpine:latest
+21) But since now the expected number of task/container that should be running are 3 and orchestrator has to make this sure, it will detect this
+    and spun up a new one, so if again check it after few seconds,
+    # docker service ls
+        ID                  NAME                   MODE                REPLICAS            IMAGE               PORTS
+        mvpk1esrsw0f        laughing_ardinghelli   replicated          3/3                 alpine:latest
+    We got back 3/3 again.
+22) This will also be recorded here
+    # docker service ps laughing_ardinghelli
+        ID                  NAME                         IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR                         PORTS
+        r6nuha9zfnli        laughing_ardinghelli.1       alpine:latest       default             Running             Running 25 minutes ago
+        ppghezp45hid         \_ laughing_ardinghelli.1   alpine:latest       default             Shutdown            Failed 25 minutes ago    "task: non-zero exit (137)"
+        pc4hv0uaeu7x        laughing_ardinghelli.2       alpine:latest       default             Running             Running 59 minutes ago
+        uw59w8a40b8h        laughing_ardinghelli.3       alpine:latest       default             Running             Running 59 minutes ago
+    So this output shows that there was a failure and orchestrator has identified it and fixed it automatically. and this is what make swarm
+    more reliable for production.
+23) Now finally if we want to remove all the three tasks/containers, we have to go and remove the service it self
+    # docker service rm laughing_ardinghelli
+

@@ -1,0 +1,105 @@
+1) So here in this lecture we are going to deal with multiple nodes/OS's and we are going to setup a 3 node swarm across all three of them.
+2) So there are multiple ways that can eb used in order to have the lab setup for this lecture:
+    a) we could use play-with-docker.com ==> which provide alpine images in the browser itself.
+    b) docker-machine + virtualbox ==> the one we have used till now, so with that to spin up two more VM in virtualbox.
+    c) Digital Ocean + Docker install ==> Use this for more production like environment 
+        referal code that could be used : 
+            https://www.digitalocean.com/?refcode=ee97875d52fa&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=CopyPaste
+                This can be used to register for 100$ free access for 60 Days
+    d) Roll your own, these could with the help of Virtualbox, or with vmware workstation creating the Linux VM's.
+    We are going to make use of the one with docker-machine, by creating below nodes using docker-machine and virtualbox 
+3) We could make use of the below commands in order to create the VM's using docker-machine
+    a) docker-machine create node1
+    b) docker-machine create node2
+    c) docker-machine create node3
+4) Now Let's ssh to node1.
+    we are going to initialize our swarm and that will become our first swarm manager node.
+    # docker swarm init --advertise-addr 192.168.99.101
+    =================================================================================================================
+    Swarm initialized: current node (qj2iqmcuvfd8jbtsrhyguevzx) is now a manager.
+
+        To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-2jtpiel5mkzjymtwu6ev2jmaj 192.168.99.101:2377
+
+        To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+    =================================================================================================================
+5) Now once the docker swarm is initialized on node1, it becomes our first manager node. Now lets go to the node2 which will become our
+    first worker node. and for that we have to run the same command as given by swarm to us while initializing the swarm on node1 
+    # docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-2jtpiel5mkzjymtwu6ev2jmaj 192.168.99.101:2377
+        This node joined a swarm as a worker.
+    So we can see that node2 have joined swarm too but as a worker node.
+6) Notice on worker node which we have just added, we cannot run the swarm command like docker node ls, etc, because this is just a worker node
+    and it does not have privileges of managing the swarm cluster. So if we try to run any such command, it will throw us an error
+    # docker node ls
+        =========================================================================================================================
+        Error response from daemon: This node is not a swarm manager. Worker nodes can't be used to view or modify cluster state. 
+        Please run this command on a manager node or promote the current node to a manager.
+        =========================================================================================================================
+    But yes we could actually promote this worker node to manager, if that is required in later feature
+7) Now lets get back to our manager node (node1)
+    # docker node ls
+        =================================================================================================================================
+        ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+        qj2iqmcuvfd8jbtsrhyguevzx *   node1               Ready               Active              Leader              19.03.12
+        4dguwz26va93d33fr3fhebxio     node2               Ready               Active                                  19.03.12
+        =================================================================================================================================
+    So now we have two nodes, with one marked as leader under manager status heading.
+8) Now on node1 which is manager node already, lets try to promote the new worked node we have created on node2 to manager as well
+    # docker node update --role manager node2
+    # docker node ls
+        =========================================================================================================
+        ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+        qj2iqmcuvfd8jbtsrhyguevzx *   node1               Ready               Active              Leader              19.03.12
+        4dguwz26va93d33fr3fhebxio     node2               Ready               Active              Reachable           19.03.12
+        ==========================================================================================================
+    So now the MAnager_status of node2 has changed and now it is "Reachable"
+    but still the node1 is still marked as leader.
+9) Now lets try to add our 3rd VM named as node3, in the swarm cluster as manager by default. So for that we can always get the token for
+    manager node by using
+    # docker swarm join-token manager
+        docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-bc45e3t2uzy0d73gulr42wnbt 192.168.99.101:2377
+    To get the token for worker node
+    # docker swarm join-token worker
+        docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-2jtpiel5mkzjymtwu6ev2jmaj 192.168.99.101:2377
+
+    To add a manager to this swarm, run the following command on node3 
+
+    # docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-bc45e3t2uzy0d73gulr42wnbt 192.168.99.101:2377
+    So we can run this above docker swarm join command on node3 and that will join our swarm cluster by default as manager, so lets do it
+    # docker swarm join --token SWMTKN-1-54np938c5i6cagpobyesg71g5pifvvp3zr4krycuuntpa7p4rq-bc45e3t2uzy0d73gulr42wnbt 192.168.99.101:2377
+        This node joined a swarm as a manager.
+    So now we have tree redundant node manager swarm available with us along with addition of the last one.
+10) Now lets get back to the node1 (leader manager node)
+    # docker node ls
+        ==============================================================================================================================
+        ID                            HOSTNAME              STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+        3f88esoidqar96enxz2d8h564 *   docker.example.com    Ready               Active              Leader              19.03.12
+        mylxyrcs3jtfelhbuyujvet5x     jenkins.example.com   Ready               Active              Reachable           19.03.12
+        qzqcwmfy6irhp733ze328ki9f     tomcat.example.com    Ready               Active              Reachable           19.03.8
+        ===============================================================================================================================
+        So we can see the status of one of the manager node is leader and other two is Reachable and all three are manager nodes only.
+11) So till now whatever setup we did we have three nodes in our swarm cluster and all three are having manager role right now.
+    Now as we did with the single node swarm, and tried to scale it up, we will again try to scale up the things in this 3 node swarm
+12) Lets get back to node1
+    # docker node ls
+    # docker service create --replicas 3 alpine ping 8.8.8.8
+    # docker service ls
+        ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+        k2b81q5bifkj        admiring_dewdney    replicated          3/3                 alpine:latest
+        So we can see that we again have three replicas or 3 tasks running for this one service with name "gallant_hopper"
+    # docker service ps gallant_hopper
+        =============================================================================================================
+        ID                  NAME                 IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+        mvi1fyfwak1m        admiring_dewdney.1   alpine:latest       node3               Running             Running 42 seconds ago
+        k6djka9yu6zk        admiring_dewdney.2   alpine:latest       node1               Running             Running 42 seconds ago
+        di2tsrplvbdi        admiring_dewdney.3   alpine:latest       node2               Running             Running 42 seconds ago
+        =============================================================================================================
+        so we can clearly see that now the three tasks of this service is now distributed across the nodes in swarm cluster and not just running
+        on a single node.
+        So with this we have successfully created 3 node swarm cluster.
+        You could also check docker container ls command on all the three nodes and you will find single container running on them
+        # docker container ls
+        # docker node ps
+            gives the tasks running on current node by default
+        

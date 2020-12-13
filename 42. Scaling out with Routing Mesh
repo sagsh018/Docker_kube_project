@@ -1,0 +1,121 @@
+1) So in this lecture we are going to discuss about the Routing mesh which we have seen in the prevous lecture:
+    a) So Routing Mesh is basically a process that routes ingress(incoming) packets for a service to proper task of that service, because we can
+        have more than one task
+    b) This methodology spans all the nodes of the swarm cluster
+    c) This methodology is basically using the IPVS from Kernel
+    d) So basically Routing Mesh load balancing across all the nodes and listening on all the nodes for traffic. And thus we could also say that
+        it load balances swarm services across their tasks
+    e) There are couple of ways to understand this methodology of Routing mesh
+        i) Container-to-container in a overlay network uses VIP. So if suppose we have two tasks for our database service and our frontend
+            web tasks has to talk to backend DB tasks, they will not do it directly, it is going to happen via VIP(virtual IP) that swarm 
+            puts in fron of all the services. and this VIP is a private IP inside the networking of swarm that ensures that the load is 
+            distributed among all the tasks for a service 
+            So you can images, that if you have 10 worker nodes, you don't have to put load balancer in front of them, swarm does that for you
+            when the containers are present in the overlay network.
+        ii) External traffic incoming to your swarm, can choose to hit any of the nodes in your swarm, and all the nodes will have published
+            ports open and listening for the container's traffic and then that node which recives the traffic re-routes the traffic to the
+            correct container based on its load balancing
+            So while deploying containers on swarm, we don;t have to worry about the, on what node that container is deployed, as that part is 
+            taken care by the swarm itself and swarm may put it on any node or even change the node as well, in case it has failed and reran
+            by swarm. Routing Mesh of swarm solve the lot of problems by routing our traffic hitting any of the node to the correct container
+            based on load balancing in place.
+    f) Also notice that this Methodology of routing Mesh comes out of the box and we don;t have to do anything for this.
+2) Now let's try to understand the Routing Mesh thing with the help of below refered Diagram. This example daigram how internal communication
+    between two services will happen with the help of VIP in place
+    Refer ==> Routing_Mesh_1.png
+    a) We have a overlay network named as my_network
+    b) inside this network we have 3 nodes : node1, node2 and node3.
+    c) and suppose we have created a new service and asked swarm to create 3 replicas of that service, So swarm has created the service named
+        my-web and created three replicas/tasks/containers on all three nodes as shown in the Diagram
+    d) So what swarm has done, inside that overlay network, swarm has created the VIP and mapped it to the DNS name of the service "my-web"
+        and any other container that i have in my overlay network that need to talk to that service "my-web" inside the swarm, they only have
+        tow worry about the "my-web" DNS and its VIP. and this VIP will load balances the traffic among all the tasks in that service.
+    e) Note that this is different from the DNS level load balancing such as round robin, where sometimes application mentain the cache and we
+        again and again hit the same node. This VIP is mode of a physical load balancer kept in place.
+3) Now Let's consider another diagram which kind of describes the case of external traffic coming in. So this matches more with our example of 
+    drupal website.
+    refer ==> Routing_Mesh_2.png
+    a) So here we have ingress network.
+    b) and we have three different nodes: node1, node2 and node3 
+    c) and we have created two replicas/tasks/containers running on node1 and 2.
+    d) So whenever the external hit on any of the IP on published node, load balancers present takes that traffic and re rout it to the 
+        designated container, which may be on the local node or any other node.
+    e) thats why when we are hitting our drupal website with the help of any of the node name, we were getting the respinse because the 
+        load balancing in place was diverting the traffic to the correct container in the background
+4) Now to understand this Routing Mesh, let's do one more example of "elasticsearch" which is a kind of a search engine, in which data could 
+    accessed using JSON web API, so it is very easy to hit it will curl and give us good example of load balancing using VIP in swarm
+5) So on node1, lets try to bring up the three replicas of elasticsearch:2 image.
+    # docker service create --name search --replicas 3 -p 9200:9200 elasticsearch:2
+    # docker service ls 
+        ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+        jxfnpmmi0eyt        drupal              replicated          1/1                 drupal:latest       *:80->80/tcp
+        rnesyiar7ast        psql                replicated          1/1                 postgres:latest
+        jb58fe5bionp        search              replicated          3/3                 elasticsearch:2     *:9200->9200/tcp
+    So lets first bring down the dupal and psql services down as we don't need them now.
+    # docker service rm drupal psql 
+6) Now lets chec out where all three replicas of search service is running
+    # docker service ps search
+        ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+        uaahezdqfq7n        search.1            elasticsearch:2     node2               Running             Running 4 minutes ago
+        zpsy17nhi0a2        search.2            elasticsearch:2     node3               Running             Running 4 minutes ago
+        w5hmfdr1j6oc        search.3            elasticsearch:2     node1               Running             Running 4 minutes ago
+    So distributed among all three nodes.
+7) Now let's access this elasticsearch service using different nodes on port 9200 and see how elastic serch gives different names on every
+    curl untill 3 times as we have three different nodes only.
+    # curl localhost:9200 // notice localhost over here points to node1 as we are running this curl on node1
+       {
+            "name" : "Jebediah Guthrie",
+            "cluster_name" : "elasticsearch",
+            "cluster_uuid" : "KCYa6TSMR5OkTuiAHd1XBA",
+            "version" : {
+                "number" : "2.4.6",
+                "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+                "build_timestamp" : "2017-07-18T12:17:44Z",
+                "build_snapshot" : false,
+                "lucene_version" : "5.5.4"
+            },
+            "tagline" : "You Know, for Search"
+        } 
+        So first time the name returned as : Jebediah Guthrie (made up name by elastic search)
+    # curl localhost:9200
+        {
+            "name" : "Puff Adder",
+            "cluster_name" : "elasticsearch",
+            "cluster_uuid" : "iQPg7nG5SmSl0MSoZEcopA",
+            "version" : {
+                "number" : "2.4.6",
+                "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+                "build_timestamp" : "2017-07-18T12:17:44Z",
+                "build_snapshot" : false,
+                "lucene_version" : "5.5.4"
+            },
+            "tagline" : "You Know, for Search"
+        }
+        Second time name : Puff Adder
+    # curl localhost:9200
+        {
+            "name" : "Hub",
+            "cluster_name" : "elasticsearch",
+            "cluster_uuid" : "2xoUCyXXR6K5st5m_aCrAg",
+            "version" : {
+                "number" : "2.4.6",
+                "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+                "build_timestamp" : "2017-07-18T12:17:44Z",
+                "build_snapshot" : false,
+                "lucene_version" : "5.5.4"
+            },
+            "tagline" : "You Know, for Search"
+        }
+    Third time name : Hub
+    And after this for every curl the names will repeat, so This is again an example how VIP is acting as a load balancer and distributing
+    the load to all three nodes.
+8) some more points about Routing Mesh
+    a) It is a stateless Load balancing, that means evertime you will hit, you will get the different result everytime, so if you want to
+        hit same container consistently then you will have to add extra functionality in it.
+    b) Routing Mesh is a Layer 3 load balancing, i.e. at IP and port layer which is OSI layer 4(TCP) and not layer 4 (DNS). So if you want to
+        run multiple website on the same port on the same server, this Routing Mesh LB will not going to do that and you will still need
+        something called as DNS level Load balancing if you want to have multiple website hosted on same port and same swarm
+    c) So both of these above disadvantages of Routing Mesh can be overcome by using either of the two solutions mentioned below
+        i) using Nginx or HAProxy LB proxy server along with your VIP and that will act as a statefull Load balancer.
+        ii) OR you could use Docker Enterprice edition which comes with built-in L4 web proxy
+    

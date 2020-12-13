@@ -1,0 +1,74 @@
+1) So before we try to scale out our application liek we did for small alpine image in previous lecture. Let's also have a look at some of
+    the new features swarm bring us to:
+2) So in this lecture we are going to talk about new network driver which is : overlay driver.
+3) To use this new network driver we just have to include this --driver overlay when creating the network using "docker network create
+    command
+4) So this network driver basically means swarm wide bridge network, where the containers cross hosts on a same virtual netowrk can acess each 
+    other, kind of like they are in a VLAN
+5) This network driver "overlay" is only for intra-swarm communications(container to container traffic) inside a single swarm. It does nothing
+    for the traffic oming from outside and only provide support for entire swarm as a whole, where we don;t have to mess around with the 
+    network of every individual node.
+6) We can also enable full network encryption using IPSec (AES) encryption algorythm, where it will actually setup IPSec tunnels between all the
+    different nodes of your swarm. but this is off by default really just for performance reasons
+7) When we create our service in swarm we can add them to no overlay networks or one or more overlay networks and this does really depends
+    on the design of your application.
+    So each service can be connected to multiple networks for example : suppose you have database on back-end on one network and front-end
+    webserver on another network, but you will have API's between both of them which are part of both the networks.
+8) Now lets gets back to our 3 node swarm cluster and put these things in action 
+    So we will take example of drupal website with postgres database and try to deploy that in our cluster and will also create a network
+    to make drupal and postgres talk to each other.
+9)  So on manager(leader) node1: let's first create the network
+    # docker network create --driver overlay mydrupal
+        NETWORK ID          NAME                DRIVER              SCOPE
+        05c9f0d0e082        docker_gwbridge     bridge              local
+        xqaay9qtwgzx        ingress             overlay             swarm
+        0yq6p9juvsav        mydrupal            overlay             swarm
+    So if you notice in the above output we could see that first one one and second one are created by default and we should not touch them, but
+    last one is the one we have created
+10) Now let's created out first service of postgres from node1:
+    # docker service create --name psql --network mydrupal -e POSTGRES_PASSWORD=brDSLsd postgres
+    # docker service ls 
+        ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+        rnesyiar7ast        psql                replicated          1/1                 postgres:latest
+    # docker service ps psql
+        ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+        4oyfb5n73x8v        psql.1              postgres:latest     node3               Running             Running 36 seconds ago
+    So we can see that our postgress service is up and running on node3
+11) We could also check out the logs of the service running using :
+    # docker service logs psql
+        OR : Go to node3, as the task/container started by swarm orchestrator on node3 
+    # docker container ls
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+        7e9acb08832c        postgres:latest     "docker-entrypoint.s…"   2 minutes ago       Up 2 minutes        5432/tcp            psql.1.4oyfb5n73x8viglcwtd2u8afo
+    # docker container logs psql.1.4oyfb5n73x8viglcwtd2u8afo
+12) Now we have our postgres service up and running, let's bring up the drupal service as well. Let's go back to node1
+    # docker service create --name drupal --network mydrupal -p 80:80 drupal
+    # docker service ls
+        ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+        jxfnpmmi0eyt        drupal              replicated          1/1                 drupal:latest       *:80->80/tcp
+        rnesyiar7ast        psql                replicated          1/1                 postgres:lates
+    # docker container ls
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+        4c1c4c56196a        drupal:latest       "docker-php-entrypoi…"   8 minutes ago       Up 8 minutes        80/tcp              drupal.1.dp1ha2ywnzyrw39zsbpcvggm7
+    # docker container logs drupal.1.dp1ha2ywnzyrw39zsbpcvggm7
+    # docker service ps drupal
+        ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+        dp1ha2ywnzyr        drupal.1            drupal:latest       node1               Running             Running 8 minutes ago
+13) So now we have our database (postgres) running on node3 and our drupal website is running on node1. And they are in the same network, so they
+    will be able to contact each other with the help of service names(psql and drupal) which we have given while creating service for them.
+14) Now let's get back to out web browser and try to launch the drupal website using URL for node1 as our drupal service is running on node1 
+    as of now.
+        http://node1:80
+    and then we will fill in the required details to bring up our drupal website on browser and in the advance setting we are going to 
+    give host name as psql(service name) for postgres. and that will start installing the drupal for us. So this is a beauty of overlay 
+    networks, that it just help containers/tasks running on different to communicate as they are running in same subnet.
+15) Now as we know that our drupal service is currently running on node1, but if we try to hit the drupal website using any one of the below URL    
+    we will be able to reach out to our website.
+    http://node1/
+    http://node2/
+    http://node3/
+    This is happening another new feature of swarm which is called as "Routing Mesh"
+    Please see next lecture to understand that.
+
+
+        

@@ -1,0 +1,111 @@
+1) In this we are going to talk about another cool feature about swarm and that is Stacks : which are also called as "Production Grade Compose"
+2) So in version 1.13 docker added another layer of abstraction to swarm and that is called Stacks. and it is basically nothing but Compose
+    file for production swarm.
+3) So Stacks accept compose files as their declarative definition for services, networks and volumes and also we could add secrets in them
+4) We can make use of "docker stack deploy" to imposr this new compose file, instead of using docker service create.
+5) Stacks manages all those objects such as services, volumes, networks, including overlay networks per stacks, and it adds the stack name in 
+    front of their name.
+6) We also get the key that we could use in the compose file and that will be "deploy:". but we couldn't be able to make use of build: key 
+    anymore in compose file for swarm.
+7) However, we could make use of the same compose files for docker and swarm, as compose now ignores deploy: and swarm ignores build: keys 
+    and don;t throw any error when they encounter them in compose file and just skip them.
+8) Also note that now we don;t need to docker-compose CLI binary to work with compose file. we could make use of docker stack deploy.
+9) So till now we have visualize our swarm as that of image ==> Diag3-Containers_setup_in_swarm_mode.png
+    Which shows us that we have created a service using "docker service create" command and then we have created three replicas of that 
+    service and orchestrator ran those replicase on same node of different node and hence the ran the containers.
+10) Now now after introducing stacks in swarm the visualization will be changed as that of image => Stack_of_services_in_swarm_1.png.
+    So as per diagram we could actually have one or more services in those stacks compose files and also we could add the configuration for 
+    volumes and overlay networks and its stack that will do everthing for us.
+    Also notice that stack will add its name in front of all the objects to uniquely identify all of them inside a stack.
+11) There is one more that which this stack diagram can include which will be secrets, but we wil see them in later lectures.
+12) Also note that stack can work with only one swarm and not with multiple swarm clusters.
+13) So now let's get back to our example of voting app for which we did assignment in the last assignment and we are going to put all the
+    things inside a yml file for stack.
+14) So we are actually going to create a new YAML file named "swarm-stack-1/example-voting-app-stack.yml". kindly have a look at the file which
+    is similar to that of docker-compose.yml file which we have used in compose for development.
+15) once we have that yml file ready, all that we could do is that we can run that yml file by using below stack command
+    # docker stack deploy -c example-voting-app-stack.yml voteapp(this is stack name)
+    but before that we have to push the created yml file to node1
+    for that we will create similar file inside node1 using vim
+    # vi example-voting-app-stack.yml
+        :wq!
+    after that when we run docker stack deploy command as mentioned above it will give output something as below
+    =================================
+    Creating network voteapp_backend
+    Creating network voteapp_frontend
+    Creating network voteapp_default
+    Creating service voteapp_worker
+    Creating service voteapp_visualizer
+    Creating service voteapp_redis
+    Creating service voteapp_db
+    Creating service voteapp_vote
+    Creating service voteapp_result
+    ====================================
+    So this output does not mean that swarm stack has built everything. it just means that stack has created all these objects inside schedular
+    which will then go through the process of creating services ==> tasks ==> containers.
+    It will also create the network frontend, backend and alos it will create one more network for that stack file which will be voteapp_default
+    Also notice voteapp_visualizer, which is a service used to see the visulizing picture of all the services on web browser and this is created
+    by docker itself
+16) Now lets have a look at some of the options for docker stack command
+    # docker stack --help
+        Options:
+            --orchestrator string   Orchestrator to use (swarm|kubernetes|all)
+        Commands:
+            deploy      Deploy a new stack or update an existing stack
+            ls          List stacks
+            ps          List the tasks in the stack
+            rm          Remove one or more stacks
+            services    List the services in the stack
+    So lets try them one by one
+    # docker stack ls
+        NAME                SERVICES            ORCHESTRATOR
+        voteapp             6                   Swarm
+    So it basically gives us the list of all the stack along with how many services it has (6 in our case) and then the name of orchestrator
+    # docker stack ps voteapp
+        ID                  NAME                   IMAGE                                       NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+        lau0vrizr9m8        voteapp_result.1       bretfisher/examplevotingapp_result:latest   node3               Running             Running 8 minutes ago
+        93bke330kdqz        voteapp_vote.1         bretfisher/examplevotingapp_vote:latest     node2               Running             Running 8 minutes ago
+        ik23jmnhke8y        voteapp_db.1           postgres:9.4                                node1               Running             Running 8 minutes ago
+        o2whcphrsrgc        voteapp_redis.1        redis:alpine                                node3               Running             Running 8 minutes ago
+        1da0veuk0ftn        voteapp_visualizer.1   dockersamples/visualizer:latest             node2               Running             Running 7 minutes ago
+        kgg2tmxkk4ir        voteapp_worker.1       bretfisher/examplevotingapp_worker:java     node1               Running             Running 9 minutes ago
+        v0sgnmrcmprh        voteapp_vote.2         bretfisher/examplevotingapp_vote:latest     node3               Running             Running 8 minutes ago
+    So these are name of tasks running in this stack along with there node information.
+    # docker stack service voteapp 
+        ID                  NAME                 MODE                REPLICAS            IMAGE                                       PORTS
+        03dpw85p64ye        voteapp_worker       replicated          1/1                 bretfisher/examplevotingapp_worker:java
+        ajdy2rzkl8dq        voteapp_visualizer   replicated          1/1                 dockersamples/visualizer:latest             *:8080->8080/tcp
+        mhxf208q9rj5        voteapp_result       replicated          1/1                 bretfisher/examplevotingapp_result:latest   *:50001->80/tcp
+        qpghqc0qw50m        voteapp_vote         replicated          2/2                 bretfisher/examplevotingapp_vote:latest     *:5000->80/tcp
+        sst3kqpzbirb        voteapp_db           replicated          1/1                 postgres:9.4
+        xpupb43hucug        voteapp_redis        replicated          1/1                 redis:alpine                                *:30000->6379/tcp
+    List down all the services along with there replicas and there status
+    # docker network ls
+        h8yjcyf44s6z        voteapp_backend     overlay             swarm
+        kmv84g3d5z6m        voteapp_default     overlay             swarm
+        u12yyb14rqzw        voteapp_frontend    overlay             swarm
+    # docker volume ls
+        DRIVER              VOLUME NAME
+        local               voteapp_db-data
+    So we can clearly see from the above listing of services, tasks, networks, volumes are all preceeds with the stack name.
+17) Now let's again go back to our browser and try to hit our app
+    http://node1:5000/
+18) we could see the the nodejs app result using
+    http://node1:50001/
+19) we could see the visualizer at
+    http://node1:8080/
+20) Now suppose we want to update the number of replicas for service "vote". we could either directly do it using docker service update, but
+    since we are already using a configuration file to structure our environmnet, we will make th changes there only. change the replicas for 
+    vote app from 2 to 3 in yml file and then run same docker stack deploy command 
+    # docker stack deploy -c example-voting-app-stack.yml voteapp
+    and this time in output you will notice: updating and not creating
+        Updating service voteapp_db (id: sst3kqpzbirbly1j1huamq9oi)
+        Updating service voteapp_vote (id: qpghqc0qw50mbt8oja4iojygz)
+        Updating service voteapp_result (id: mhxf208q9rj5noat2kyjjwb11)
+        Updating service voteapp_worker (id: 03dpw85p64yetpphijxrlzsxp)
+        Updating service voteapp_visualizer (id: ajdy2rzkl8dqg9j7kvfmcj7mg)
+        Updating service voteapp_redis (id: xpupb43hucughv47cu7jy8xof)
+21) and again we can check our visualizer and it will replect 3 replicas for vote service instead of 2.
+22) to remove everthing:
+    # docker stack rm voteapp
+    
