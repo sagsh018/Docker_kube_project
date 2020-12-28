@@ -1,0 +1,143 @@
+1) In this lecture we are going to take a look at a new feature named: HEALTHCHECK in docker
+2) HEALTHCHECK was added in docker 1.12.
+3) HEALTHCHECK is supported in Dockerfile, Compose YAML file, docker run command, and all the swarm services.
+4) So basically to perform this HEALTHCHECK docker engine exec's the command in a container, to check whether the application running inside 
+    the container is behaving as expected. for example, let say we have spun up a container for latest image of nginx, so the basic command
+    that docker engine will exec inside the nginx container will be : "curl localhost"
+5) There are only two possible outcomes of HEALTHCHECK commad, either exit 0(OK) or exit 1(Error)
+6) based on the exit code above, there are three states of a container : 
+    a) starting(first 30 seconds, when container is starting),
+    b) Healthy(after first 30 seconds, docker exec the command inside the container and if return code is exet 0 then it set the status of
+                container as Healthy)
+    c) Unhealthy(again suppose after 30 seconds, docker exec the same command and if this time it gets the return code exet 1, then it set the
+                    container as Unhealthy)
+7) HEALTHCHECK is much better then "is binary still running" which is checked by the docker swarm by default.
+8) HEALTHCHECK is not a external monitoring replacement.
+9) We can see the HEALTHCHECK status in the "docker container ls" command
+10) we can check last 5 healthchecks with "docker container inspect" command 
+11) When docker gets the exit 1 code at any time, then docker just displays that in the docker container ls output, but it does not take 
+    any action.
+12) but when it comes to docker swarm, it replces the task with the new one if the exit code comes out to be exit 1. and run another task/
+    container on same of different node.
+13) While performing the rolling updates on the tasks running using service update command, the update is applied to the running task, then
+    because of that update, the old one is replaced with the new one and then service update command wait for task/container to return exit 0
+    before continuing further.
+14) Now let's see how we can explictly mention the HEALTHCHECK :
+    a) During container run time for an exiting image which does not have healthchecks funtionality defined inside it.
+        example:
+        =======
+        docker container run \
+        --health-cmd="curl -f localhost:9200/_cluster/health || false" \
+        --health-interval=5d \
+        --health-retries=3 \
+        --health-timeout=2s \
+        --health-start-period=15s \
+        elasticsearch:2
+        Note:
+        =====
+        The "false" option at the end of --health-cmd, make sure that if any code other than 0 is returned, it will be converted to 1,
+        as docker only knows 0 or 1
+    b) Inside the Dockerfile
+        example:
+        ========
+        i) Options for HEALTHCHECK inside the Dockerfile
+            --interval=DURATION(default is 30s) - time interval between two consecutive checks
+            --timeout=DURATION(default is 30s) - Time interval to wait for any app response before declaring it Unhealthy
+            --start-period= DURATION (default is 0s) - Time interval to tell docker, after how much time should is start considering it 
+                unhealthy after starting, for example, some heavy app such as java apps, databases, takes time to start.
+            --retires=N (default is 3) - Shows number of retries docker should make before declaring it unhealthy.
+        ii) example of basic HEALTHCHECK command inside Dockerfile with default Options
+            HEALTHCHECK curl -f http://localhost/ || false
+        iii) example of HEALTHCHECK command with all the cutom options:
+            HEALTHCHECK --timeout=2s --interval=3s --retries=3 \
+            CMD curl -f http://localhost/ || exit 1 (here exit 1 does the same task as that of "false")
+
+        Example of nginx image example:
+        =======================================================
+        FROM nginx:1.13
+
+        HEALTHCHECK --interval=30s --timeout=3s \
+        CMD curl -f http://localhost/ || exit 1
+        =======================================================
+
+        Example : PHP-FPM running behind Nginx, test the nginx and FPM status url's 
+        =======================================================
+        FROM your-nginx-php-fpm-combo-image
+
+        # don't do this if php-fpm is another container
+        # must enable php-fpm ping/status in pool.ini 
+        # must forward/ping and /status urls from nginx to php-fpm
+
+        HEALTHCHECK --interval=5s --timeout=3s \
+        CMD curl -f http://localhost/ping || exit 1
+        ========================================================
+
+        Example: Use a postgresql utility to test for ready state:
+        =========================================================
+        FROM postgres 
+
+        # specify real user with -U to prevent errors in log
+
+        HEALTHCHECK --interval=5s --timeout=3s \
+        CMD pg_isready -U postgres || exit 1
+        =========================================================
+    c) inside the compose/Stack file
+        Example:
+        =====================================================================================
+        version "2.1" (minimum for healthcheck 2.1 verison for compose file is retriesquired)
+
+        services:
+          web:
+            image: nginx
+            healthcheck:
+              test: ["CMD","curl","-f","http://localhost"]
+              interval: 1m30s
+              timeout: 10s 
+              retries: 3
+              start_period: 1m # version 3.4 minimum for using start_period
+        =====================================================================================
+15) With docker container run command
+    # docker container run --name p1 -d --health-cmd="pg_isready -U postgres | exit 1" postgres
+    # docker container ls   
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                            PORTS               NAMES
+        0991c50ded16        postgres            "docker-entrypoint.s"   4 seconds ago       Up 4 seconds (health: starting)   5432/tcp            p1
+    # docker container ls
+        CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                    PORTS               NAMES
+        0991c50ded16        postgres            "docker-entrypoint.s"   48 seconds ago      Up 48 seconds (healthy)   5432/tcp            p1
+    So we can see the status of the container showing along with the uptime.
+    # docker container inspect p1   
+        "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2020-12-27T19:33:43.967708346Z",
+                        "End": "2020-12-27T19:33:45.021598063Z",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2020-12-27T19:34:15.051721834Z",
+                        "End": "2020-12-27T19:34:15.797349704Z",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2020-12-27T19:34:45.819725108Z",
+                        "End": "2020-12-27T19:34:46.588424214Z",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    },
+                    {
+                        "Start": "2020-12-27T19:35:16.623467771Z",
+                        "End": "2020-12-27T19:35:17.428626365Z",
+                        "ExitCode": 0,
+                        "Output": "/var/run/postgresql:5432 - accepting connections\n"
+                    }
+16) With docker serivce command
+    # docker service create --name p2 -e POSTGRES_PASSWORD="brDSLsd" postgres
+        So here we have not mentioned the healthcheck option, so here as soon as service startup completes, it will immediately converted to 
+        running
+    # docker service create --name p3 -e POSTGRES_PASSWORD="brDSLsd" --health-cmd="pg_isready -U postgres | exit 1" postgres
+        So in this case, after service starting up tasks complete, it will wait for default 30s before converting starting to running.
+

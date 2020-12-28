@@ -1,0 +1,79 @@
+1) So here we are going to see some important points about the service update using docker service update command
+2) Service updates provide provides rolling replacement of tasks/containers/replicas in a service. that is one at a time and not all at once.
+    So service start rolling the updates, let seay from first replica and then wait for it to be successful and then do the update on 
+    second one.
+3) Service updates are happen in such a way that it limits the downtime. notice that it does not prevent the downtime and just limits it. The 
+    reason is that your service might be interacting with other complex things like DB, network sockets, so if the update is rolled out to a 
+    service these all complex things are going to be impacted and for this you have to test more often.
+4) Service updates replaces the running container/replica with totally a new one.
+5) There are many many cli options with docker service update command which can be viewed using :
+    # docker service update --help
+6) Lot of these options in the service update command are create options which are having -add or -rm at the end of them. So so if we want to
+    update multiple ports then we can make use of the service update command and at the end of every port we could add -add or -rm to tell
+    update command whether we want to add or remove that port.
+7) This service update command also include many options which include rollback and healthcheck options. which basically perform the
+    healthcheck and make sure whether your system can be updated easily or not.
+8) service command now also has scale and rollback subcommand for quicker access
+    # docker service scale web=4
+    # docker service rollback web
+9) If we are working with stack files and updated any service inside the stack file, and stack was already deployed before then next time
+    also we have to run docker stack deploy only and there is not update command for that. in the background stack with work with services,
+    network and all the things and update them if any modifications are made to them.
+10) Let's have a look at some of the examples for service update in swarm:
+    a) Just update the image used in a service to a newer version:
+        # docker service update --image myapp:1.2.1 <service name>
+    b) Adding an environment variable and remove a port
+        # docker service update --env-add NODE_ENV=production --publish-rm=8080
+    c) Change number of replicas of two services at the same time
+        # docker service scale web=8 api=8
+    d) Updating anything in case of stack deploy will be just updating the YAML file and run the same below command
+        # docker stack deploy -c file_name.yml <stack name>
+11) Now let's get back to our command line and try create a new service in our single node swarm cluster running on docker machine "default"
+    # docker service create --name web -p 8088:80 nginx:1.18.0
+    # docker service ls 
+        ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+        w1aoe1ooyvnc        web                 replicated          1/1                 nginx:1.18.0        *:8088->80/tcp
+    # docker service ps web
+        ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+        qko9ymo8ohc0        web.1               nginx:1.18.0        default             Running             Running 23 seconds ago
+12) So after we have created our service let's try to update few things on this.
+    a) First let's try to scale up the number of replicas to 5
+        # docker service scale web=5
+            So one of the replica will be already running and orchestrator has to start another 4 so it may take some time and it shows the
+            status as pending 
+            web scaled to 5
+            overall progress: 5 out of 5 tasks
+            1/5: running   [==================================================>]
+            2/5: running   [==================================================>]
+            3/5: running   [==================================================>]
+            4/5: running   [==================================================>]
+            5/5: running   [==================================================>]
+            verify: Service converged
+    b) Now let's update the image version of our service from nginx:1.18.0 to nginx:1.19.6. Also notice this is going to be rolling update
+        which means, update will be done on one replica at a time and when that one is successful then it will proceed to next one.
+        and during this update, old replica will be removed and new one wil be crated with updated image.
+        # docker service update --image nginx:1.19.6 web
+            ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                 ERROR               PORTS
+            uisg0lplkahm        web.1               nginx:1.19.6        default             Running             Running about a minute ago
+            qko9ymo8ohc0         \_ web.1           nginx:1.18.0        default             Shutdown            Shutdown about a minute ago
+            q7d0lav5g5cl        web.2               nginx:1.19.6        default             Running             Running about a minute ago
+            dqohb9stfjb1         \_ web.2           nginx:1.18.0        default             Shutdown            Shutdown 2 minutes ago
+            no697v64jf63        web.3               nginx:1.19.6        default             Running             Running about a minute ago
+            ic2gwliyi64z         \_ web.3           nginx:1.18.0        default             Shutdown            Shutdown about a minute ago
+            jfle1stl42sj        web.4               nginx:1.19.6        default             Running             Running about a minute ago
+            wh0kjpfhncr4         \_ web.4           nginx:1.18.0        default             Shutdown            Shutdown about a minute ago
+            65g933sotihu        web.5               nginx:1.19.6        default             Running             Running about a minute ago
+            lki80c6khcda         \_ web.5           nginx:1.18.0        default             Shutdown            Shutdown about a minute ago 
+        So we can see that new replicas were created and old ones were shutdown.
+    c) Now let's update the published port from 8088 to 9090 :
+        # docker service update --publish-rm 8088 --publish-add 9090:80 web
+            So notice that to update the port we had to remove the port first and then add it. and again this will be rolling update.
+13) Docker Tip:
+    Suppose we have multinode swarm cluster and we have many replicas/containers running on them but they are not evenly balanced. that means
+    some of the nodes have less number of tasks, whereas others have more tasks. and docker by default will not balance them. but we could 
+    actually use service update commands with these services without actually updating anything and when they will start again they will 
+    published onto the nodes having less number of tasks and hence there is indirect way of balancing.
+        # docker service update --force web
+    So with this command swarm will roll through all the tasks and replace them evenly in cluster.
+14) Let's remove the service at the end
+    # docker service rm web

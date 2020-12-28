@@ -1,0 +1,51 @@
+1) So here we are going to see the complete life cycle of compose, where we might have to make use of multiple compose files.
+2) So here we are going to work with single set of compose files:
+    a) for local development we are going to make use of docker-compose up.
+    b) for CI environment where we want to do the testing we will make use of docker-compose up/config
+    c) for production environment we are going to make use of docker stack deploy 
+3) So for this lets create another sub folder under our working directory:
+    secrets-sample-3/
+    under this directory we are going to put multiple compose files to use for local, testing, production
+4) Let's switch into this secrets-sample-3 directory
+    # cd secrets-sample-3
+    In this directory we are going to work on our drupal example with web fron and psql database.
+    let's first create :
+        a) Dockerfile: Extending the default drupal image and running apt-get update, downloading the themes from git and storing it on
+            /var/www/html/themes inside the container that is going to run this image, and then changing back the working directory
+        b) docker-compose.yml : This is a default compose what we call as override, so in override we have this kind of default compose file 
+            which remain same across all the environments with the default values.
+        c) docker-compose.override.yml: So this is where the funtionality of overriding the default "docker-compose.yml" file comes into 
+            picture. if in our working directory we have file named "docker-compsoe.override.yml" then whenever you are going to run
+            docker-compose up -d, its going to override the default one with this file. So this override file is overriding/overlaying the drupal 
+            image, by using the custom image building and notice we are not mentioning the name of image, which
+            it is taking from default docker-compose.yml file. So this is basically a file used for development purpose.
+        d) docker-compose.test.yml: So this is the file that will be used in testing on may be let say a CI tool jenkins. but notice unlike
+            docker-compose.override.yml file this .test.yml file is not picked up automatically and has to manually mention with -f option
+            So let suppose everytime i am making any changes to my code repo and pusjing it to source control system and which is ultimately
+            triggerring the job in jenkins and that job is using this resting docker-compose.test.yml file to test the things are working or 
+            not.
+            Also notice that we are not creating any volumes in here because we need this for just testing purpose and don't want to keep
+            any data after that
+            except we are creating a bind mount from local host directory to make sure that the testing is done with the same sample-data 
+            everytime.
+        e) docker-compose.prod.yml: This is the file that will be used for our production swarm. and this could be run with the option
+            docker-compose config which actually combile multiple config files into one and that one file can be used for stack deployment.
+            So at the running time we are going to make of config option to squeze this file and the default docker-compose.yml file
+            and create a new ready to deploy file on production using stack.
+5) Now let's try to execute them one by one. but for that we have create all the files under our secrets-sample-3 inside the default docker-machine
+    as the secrets does not work with the docker toolbox.
+6) on default docker-machine : pwd => /home/docker
+7) DEVELOPMENT PHASE
+   =================
+   # docker-compose up -d 
+    Now this is first going to take docker-compose.yml file and then its going to automatically overlay the docker-compose.override.yml file
+    and if we inspect the containers spun by these we will see all the volumes created as mentioned in the override file that means docker
+    by default overriden the default file.
+8) TESTING PHASE : Let say on CI tool jenkins
+    # docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d 
+    So here since this is test file and will not be overlaying the default file itself, hence we will use the -f  option and also after
+    executing this we will see that no volumes ara created as we decided since we don't need them.
+9) PRODUCTION PHASE : 
+    Here we will be combining the defualt docker-compose.yml file with the docker-compose.prod.yml file and output that in separate file
+    and that file could be used for stack deploy
+    # docker-compose -f docker-compose.yml -f docker-compose.prod.yml config > output.yml
