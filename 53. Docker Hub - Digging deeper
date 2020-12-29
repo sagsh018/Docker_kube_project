@@ -1,0 +1,36 @@
+Container registeries:
+======================
+1) An image registery needs to be apart of your container plan. That means there has to be some place off of your server and off of your
+    workstation where you can store your images. These are not optional, because docker and its tools are designed to work in this format
+    Hence we need to have a image registries as part of our container plan.
+2) We are going to learn more about Docker hub details including auto-build
+3) We will learn about docker store(store.docker.com) and how it is different from hub
+4) We will learn about docker cloud(cloud.docker.com) and how it is different from hub
+5) We will learn about the new swarms feature in cloud to connect Mac/Win to swarm
+6) We will learn how to install and use Docker registry as private image store
+7) We will also learn about the 3rd party registry options.
+
+Docker Hub : Public Registry - Digging Deeper
+=============================================
+1) This is most popular public image registry
+2) It's really Docker registry plus lightweight image building feature also included in That
+3) We will explore more about the features of Docker hub
+4) Then we will learn abut linking the Github/Bitbucket to Hub and autobuild images on commit 
+5) Then we will learn some feature about chaining the image building together to make sure that your images are always up to date.
+
+Docker Hub
+============
+1) It is a default Registry for docker.
+2) It is Docker registry plus simple image building
+3) While creating the new Repo we can link the github repo with this Docker hib and in that way if we push the changes to our source code repo, 
+    we can have our image build here in Docker hub.
+    We will do the practical for this later.
+Steps:
+======
+1) First go to the Account settings inside Docker hub, over there click on connect and authorize docker to have access to github Account
+2) Once Github account is linked to docker, you are now ready to create new repo on docker hub
+3) Go to main page of docker hub, click on Create Repo
+4) on create repo page, give the name of repo, select as public repo and then click on github icon at the end of page and give you github repo
+    details and click on create and build
+5) once your repo is created on docker hub, click on that and inside that click on set builds for this repo, inside that set the rules to build 
+    it whenever you push the code to your git repo.

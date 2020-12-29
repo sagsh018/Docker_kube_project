@@ -1,0 +1,27 @@
+1) Here we are going to understand how to run Docker Registry using image of registry.
+2) How it can act as a private image registry for your network
+3) It is part of docker/distribution Github repo. The new version of registry i.e. v2 is written in Go.
+4) On Github ==> https://github.com/docker/distribution
+5) On Docker Hub it is available as a simple image named Registry whch we can pull and run it as container to have our own registry running.
+    ==> https://hub.docker.com/_/registry. And this is the one we are going to make use of.
+6) This act as a defacto backend registry used to store containers privately.
+
+registry image from Docker hub
+===============================
+1) This does not help in creating the registry as full featured as Hub or others. 
+2) It does not create the registry with any UI 
+3) It does support certificates and basic authentications. but they are not enabled by default.
+4) In the registry created using this docker image of registry is going to have authentication of type of either full or none. i.e. if i get
+    the user name and password for this registry i will have full read and write access to all the things inside it.
+5) This is not much used at enterprise level.
+6) At its core, its just a web API and storage system, written in Go.
+7) This registry created using Registry image from docker hub supports storage of local, S3/Azure/Alibaba/Google Cloud and even Openstack swift
+8) We are going to make use of local storage for this registry we are going to create. which will be basically using the local file system in 
+    the image or on your host using volumes 
+9) There are couple of things that need to be understood:
+    a) Secure your registry with TLS ==> We will secure it later after creating it in further lectures.
+    b) Storage cleanup via Garbage Collection ==> https://docs.docker.com/registry/garbage-collection/
+    c) Enable Hub Caching via "--registry-mirror" : Helps in reducing number of attempts to docker hub everytime you pull an image, as it 
+        creates a mirror image of that image pulled in the local registry and when next time you try to access same it is given out from there.
+        ==> https://docs.docker.com/registry/recipes/mirror/
+        Also this could be seen as failover for your Hub.

@@ -1,0 +1,80 @@
+1) In this lecture we are going to actually starting up our private docker registry.
+2) We are going to  do following steps:
+    a) Run a registry image on default port 5000
+    b) Re-tag an existing image and push it to your new registry
+    c) Remove that image from local cache and pull from a new registry 
+    d) Re-create registry using bind mount and see how it stores data.
+3) Docker won't talk to any remote registry you create without HTTPS. So we can say it is secure by default
+4) Docker will talk to only the registry on localhost(127.0.0.0) without HTTPS
+5) For remote self-signed TSL, enable "inscure-registry" in docker engine, otherwise it will again won;t talk to the remote registry.
+6) So now lets try to create one registry locally on port 5000.
+    a) first let's create a subdirectory under our root workstaion directory
+        # pwd
+            /c/Users/Sagar/projects/Docker_kube_project
+        # mkdir -p registry-sample-1
+        # cd registry-sample-1
+        # docker container run --detach -p 5000:5000 --name registry registry
+        # docker container ls 
+            CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+            1c7c4df9ed9b        registry            "/entrypoint.sh /etc"   9 seconds ago       Up 8 seconds        0.0.0.0:5000->5000/tcp   registry
+            We can validate ot over the web browser using below URL
+            http://docker.engine:5000/v2/_catalog
+                {"repositories":[]}
+    b) Now we have registry image running and we do have local registry on our localhost(default VM for virtualbox). Next step is to retag
+        the existing image and push it to our newly created local registry. but this time while re-tagging it we are not going to put the
+        account name in front of the image name, as we didi while pushing the image to docker hub, rather we are going to put the hostname in
+        any other registry.
+        So let's first pull a small hello-world image  from docker hub registry.
+        # docker pull hello-world
+        # docker image ls
+            hello-world         latest              bf756fb1ae65        12 months ago       13.3kB
+        # docker container run hello-world
+            and this is going to give nice and simple hello-world text.
+        and now let's re-tag this image
+        # docker image tag hello-world:latest 127.0.0.1:5000/hello-world:latest
+        # docker image ls
+            hello-world                       latest              bf756fb1ae65        12 months ago       13.3kB
+            127.0.0.1:5000/hello-world        latest              bf756fb1ae65        12 months ago       13.3kB
+        Now let's push it 
+        Note to push this to our local registry running on "default" linux Vm we will have to first login to that because we don't have it
+        HTTPS and if we try to take this action from out local machine then docker wont talk to that registry.
+        # docker-machine ssh default
+        # docker push 127.0.0.1:5000/hello-world
+        Notice here the image is not going to be pushed to docker hub under our account, instead docker is going to see the IP of the host 
+        having the local registry and push it there
+            The push refers to repository [127.0.0.1:5000/hello-world]
+            9c27e219663c: Pushed
+            latest: digest: sha256:90659bf80b44ce6be8234e6ff90a1ac34acbeb826903b02cfa0da11c82cbc042 size: 525
+        Note : Again let's validate it over the browser
+            http://docker.engine:5000/v2/_catalog
+                {"repositories":["hello-world"]}
+            So my repo now has a image i pushed.
+        Now let's go ahead and remove the local copies of the hello-world images:
+        # docker image rm hello-world
+        # docker image rm 127.0.0.1:5000/hello-world
+        # docker image ls
+            This will show that we don't have hello-world image available in our local cache
+        Now let's try to pull down our image from newly created local registry
+        Note: again we have to do this task from within the "default" VM
+        # docker image pull 127.0.0.1:5000/hello-world
+        # docker image ls
+            127.0.0.1:5000/hello-world   latest              bf756fb1ae65        12 months ago       13.3kB
+        So that's it we have our own private registry up and running.
+7) Now let's delete this registry we have created and try to create a volume instead of that to do the same thing.
+    # docker container rm -f registry
+        To remove the registry
+    # docker container run -d -p 5000:5000 --name registry -v //c//Users//Sagar//projects//Docker_kube_project//registry-sample-1//registry-data:/var/lib/registry registry
+        To create the registry using bind mount on local disk.
+        Now let's try to push the same image again
+    # docker image push  127.0.0.1:5000/hello-world (from inside of default(VM))
+        The push refers to repository [127.0.0.1:5000/hello-world]
+        9c27e219663c: Pushed
+        latest: digest: sha256:90659bf80b44ce6be8234e6ff90a1ac34acbeb826903b02cfa0da11c82cbc042 size: 525
+    # pwd => /c/Users/Sagar/projects/Docker_kube_project/registry-sample-1
+    # cd registry-data/
+    # ls    
+        docker/
+        Notice some data is now present here.
+8) Assignment for securing your registry using TSL and also enabling the authentication to it using below URL
+    https://training.play-with-docker.com/linux-registry-part2/
+    
