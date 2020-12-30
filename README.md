@@ -16,3 +16,5 @@
 ## Reference Galore
 ## Connecting docker-machine from ourside app to query Docker Engine API
     https://stackoverflow.com/questions/40294853/how-to-enable-docker-api-access-from-windows-running-docker-toolbox-docker-mach
+## Docker Certification Registration URL
+    https://training.mirantis.com/certification/

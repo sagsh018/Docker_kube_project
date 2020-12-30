@@ -1,0 +1,34 @@
+1) One important command noted for stapping/starting containers, removing containers, removing images in bulk
+    # docker container stop $(docker container ls -aq)
+    # docker container rm $(docker container ls -aq)
+2) Note that while doing the docker container exec -it, we could only execute another command if and only if the container is having
+    initial/primary command running 
+    for example in case of nginx container, the initial process of nginx should be running and then only we could execute other
+    command using docker container exec like bash, netstat, ping.
+    Also note that this second command will not start again after container restart
+3) -it flag in docker container exec command
+    --interactive/-i : This flag keeps the stdin stream open even if not attached.
+    --tty/-t : This flag allocates pseudo-TTY for your session inside container.
+4) Default command for container:
+    This is basically a default command that runs at the start of container
+    This is usually hard coded in the Dockerfile.
+    We could override it by two methods:
+        a) Either changing it inside the Dockerfile
+        b) Giving it at the time of container run
+            # docker container run -d --name nginx -p 8080:80 nginx sleep 50
+    The PID for this process will be PID 1 and as soon as this process will stop the container will exit.
+5) Restart policies provided by docker to control whether your containers start automatically when they exit or when docker restarts
+    Restart policies (using --restart option)
+    =========================================
+    a) Flag -> no : Do not automatically restart the container (default)
+    b) Flag -> on-failure : Restart the container if it exits due to error, which manifests as non zero exit code
+    c) Flag -> unless-stopped : Restart the container unless it is explicitly stopped or docker itself stopped or restart(This is the 
+        one we use most in production)
+    d) Flag -> always : Always restart the container if it stops.
+    # docker container run -d --name nginx -p 8080:80 --restart unless-stopped nginx
+6) To check how much space all components of docker are taking on the host VM :
+    # docker system df 
+    # docker system df -v (give per component)
+7) Notes link for section 1 : Getting started with Docker 
+    https://docs.google.com/document/d/1LsQyB_9DlKkA2CfFgF0zkRclfO9lZT9ZoIHcANWzvxQ/edit
+    
