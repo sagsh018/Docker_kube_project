@@ -1,0 +1,95 @@
+1) Difference between the COPY and ADD instructions in Dockerfile
+    a) COPY : takes the source and destination. It only lets you copy in local file or directory from your host.
+        example ==> COPY ./copy_file.txt /location/inside/container
+    b) ADD : this let you do what COPY can do, but does two extra tasks:
+        i) You can use URL instead of local file/directory
+        ii) You can extract a tar file from source directly into destination.
+    c) Note that for fetching/adding file from remote URL avoid using ADD, instead we could make use of curl/wget command under RUN
+        instructions.
+    d) ADD instruction while copying the compressed file, first uncompress the file on local host and then copy the that uncompressed file
+        inside the container.
+    e) So use COPY over ADD whenever you have normal file to be copied to container.
+2) With curl always use -f/--fail option for silent fail.
+3) HEALTHCHECK Instruction 
+    Document ==> https://docs.docker.com/engine/reference/builder/
+            ==> https://docs.docker.com/engine/reference/run/#healthcheck
+4) CMD & ENTRYPOINT Instructions inside the Dockerfile.
+    a) CMD specifies the command that should run on the container startup, but this is something we could override at run time by
+        specifying the new command in the docker container run command
+    b) ENTRYPOINT also specifies the command that shoudl run at the entry/startup of a container, but we cannot override the ENTRYPOINT
+        command at run time. However we could append a new command to that.
+5) WORKDIR Instruction ==> This changes the working directory to the specified directory and when we login to the container we directly
+    land into the working directory.
+6) ENV Instruction ==> This sets the environment variable<key> to the value<value>
+    Ex: ENV NGINX 1.2
+    We could also make use of -e, --env, --env-file to set simple environment variable in the container during the container run or 
+    overwrite variables that are defined in the Dockerfile of image
+    docker container run --env VAR1=value1 --env VAR2=value2 ubuntu env | grep -i var
+7) Whenever you make changes inside container, as we know those changes are made just at the container layer' file system running on top of 
+    image layers, and are not replicated to the below image layers.
+    but if we want we could actually commit the current state of container and create a new image with that modified container.
+
+    So whenever we make changes inside a container, it is useful to commit a container's file changes or settings into new image.
+    By default, the container will be committed and its processes will be paused while the image is committed
+    syntax:
+        # docker container commit <container name/ID> <new image name>
+    We can also make changes to the instruction written inside the Dockerfile, by using this docker container commit command
+        # docker container commit --change='CMD["bash"]' busybox
+    This is going to change the default command of busybox container from sh to bash.
+    So --change option in docker container commit command will apply Dockerfile instructions to the image that is created.
+    Supported Dockerfile instructions for --change options are as below:
+    CMD|ENTRYPOINT|ENV|EXPOSE
+    LABEL|ONBUILD|USER|VOLUME|WORKDIR
+8) Image layering
+    Important point
+    ================
+    It is important to understand how we are desinging the layers of our image
+    example 1
+    =========
+        FROM ubuntu:latest
+        RUN dd if=/dev/zero of=/root/file1.txt bs=1M count=100
+        RUN dd if=/dev/zero of=/root/file2.txt bs=1M count=100
+        RUN rm -f /root/file1.txt
+        RUN rm -f /root/file2.txt
+    The size of this image is 276 MB, because deletion of files are happening at different layers.
+    exmaple 2
+    =========
+        FROM ubuntu:latest
+        RUN dd if=/dev/zero of=/root/file1.txt bs=1M count=100 && rm -f /root/file1.txt
+        RUN dd if=/dev/zero of=/root/file2.txt bs=1M count=100 && rm -f /root/file2.txt
+    The size of this image will be only 76 MB, deletion is happeneing at the same layers as that of file created.
+9) inspect command in docker helps in getting the output in specific format as below
+    # docker image inspect ubuntu --format='{{.ContainerConfig.Hostname}}'
+10) docker image prune : Clean up unused images-Dangling images(Images without Tags AND images not referenced by container)
+    docker image prune -a : clean up the al the images which are not referenced by any container inlcuding the onces which has tags also.
+11) Flattening the docker images into single layer
+    As we know that more the number of layers, more will be the size of an image because every layer is going to add its own size.
+    Let's do an example of Flattening the ubuntu image(having 5 layers from official image)
+    # docker container run -detach --name mynginx --publish 8080:80 nginx 
+    # docker container export mynginx > mynginxdemo.tar (Exported the running container to a tar file)
+    # ls -l => will show the tar file created above in the PWD
+    # docker image import mynginxdemo.tar mynginx:latest
+        or
+    # cat mynginxdemo.tar | docker image import - mynginx:latest
+    # docker image ls
+        REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+        mynginx      latest    23846c5bc83a   3 seconds ago   131MB
+        nginx        latest    ae2feff98a0c   2 weeks ago     133MB
+    # docker image history nginx
+        have multiple layers
+    # docker image history mynginx
+        Have only one layer
+    So we have flattened the image to one layer
+12) Docker Registries:
+    A Registry is a stateless, highly scalable server side application tht stores and let's you distribute docker images,
+    Docker Hub is one of the example which we all have used. and also on Docker Hub we can setup auto image generation with the
+    Dockerfile you will push on Github.
+    There are various types of Registries:
+        a) Docker Registry : Public, Open source, Has limited features but allows you to have basic functionality of storing docker image.
+        b) Docker Trusted Registry : Enterprise variant - with Docker EE. It has lot more features when compared with Docker Registry
+        c) Private Registries(AWS ECR) 
+        d) Docker Hub : Cloud based offering where you can store your images.
+
+
+
+
